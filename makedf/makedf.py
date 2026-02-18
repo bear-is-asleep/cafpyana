@@ -6,6 +6,8 @@ from .calo import *
 from .chi2pid import SBND_CALO_PARAMS
 from . import numisyst, g4syst, geniesyst, bnbsyst
 
+pd.set_option('future.no_silent_downcasting', True)
+
 PDG = {
     "muon": [13, "muon", 0.105,],
     "proton": [2212, "proton", 0.938272,],
@@ -40,6 +42,10 @@ TRUE_KE_THRESHOLDS = {"nmu_27MeV": ["muon", 0.027],
                       "nk_25MeV": ["kaon_p", 0.025],
                       }
 
+def make_envdf(f):
+    env = getenv.get_env(f)
+    return env
+
 def make_hdrdf(f):
     hdr = loadbranches(f["recTree"], hdrbranches).rec.hdr
     return hdr
@@ -56,11 +62,18 @@ def make_potdf_numi(f):
     pot = loadbranches(f["recTree"], numipotbranches).rec.hdr.numiinfo
     return pot
 
+def make_framedf(f):
+    frame = loadbranches(f["recTree"],sbndframebranches).rec.sbnd_frames
+    return frame
+
+def make_triggerdf(f):
+    return  loadbranches(f["recTree"], trigger_info_branches).rec.hdr.triggerinfo
+
 def make_mcnuwgtdf(f):
-    return make_mcnudf(f, include_weights=True, multisim_nuniv=1000)
+    return make_mcnudf(f, include_weights=True, multisim_nuniv=100)
 
 def make_mcnuwgtdf_slim(f):
-    return make_mcnudf(f, include_weights=True, multisim_nuniv=1000, slim=True)
+    return make_mcnudf(f, include_weights=True, multisim_nuniv=100, slim=True)
 
 def make_mcnudf(f, include_weights=False, multisim_nuniv=250, wgt_types=["bnb","genie"], slim=False, **kwargs):
     # ----- sbnd or icarus? -----
@@ -75,7 +88,6 @@ def make_mcnudf(f, include_weights=False, multisim_nuniv=250, wgt_types=["bnb","
     if include_weights:
         if len(wgt_types) == 0:
             print("include_weights is set to True, pass at least one type of wgt to save")
-
         else:
             if det == "ICARUS":
                 wgtdf = pd.concat([numisyst.numisyst(mcdf.pdg, mcdf.E), geniesyst.geniesyst(f, mcdf.ind), g4syst.g4syst(f, mcdf.ind)], axis=1)
@@ -92,6 +104,7 @@ def make_mcnudf(f, include_weights=False, multisim_nuniv=250, wgt_types=["bnb","
                     df_list.append(g4wgtdf)
                 wgtdf = pd.concat(df_list, axis=1)
             mcdf = multicol_concat(mcdf, wgtdf)
+
     return mcdf
 
 def make_mchdf(f, include_weights=False):
@@ -104,6 +117,10 @@ def make_mchdf(f, include_weights=False):
 def make_crtspdf(f):
     crtspdf = loadbranches(f["recTree"], crtspbranches).rec
     return crtspdf
+
+def make_crthitdf(f):
+    crthitdf = loadbranches(f["recTree"], crthitbranches).rec.crt_hits
+    return crthitdf
 
 def make_opflashdf(f):
     opflashdf = loadbranches(f["recTree"], opflashbranches).rec.opflashes
@@ -229,7 +246,23 @@ def make_trkhitdf(f,plane):
     lasthit = df.groupby(level=list(range(df.index.nlevels-1))).tail(1).copy()
     lasthit["lasthit"] = True
     df["lasthit"] = lasthit.lasthit
-    df.lasthit = df.lasthit.fillna(False)
+    df.lasthit = df.lasthit.fillna(False).infer_objects()
+
+    return df
+
+def make_trktruehitdf_plane0(f):
+    return make_trktruehitdf(f, 0)
+
+def make_trktruehitdf_plane1(f):
+    return make_trktruehitdf(f, 1)
+
+def make_trktruehitdf_plane2(f):
+    return make_trktruehitdf(f, 2)
+
+def make_trktruehitdf(f, plane=2):
+    branches = [trktruehitbranches_P0, trktruehitbranches_P1, trktruehitbranches][plane]
+    df = loadbranches(f["recTree"], branches).rec.slc.reco.pfp.trk.calo
+    df = df["I" + str(plane)].points.truth
 
     return df
 
@@ -315,9 +348,53 @@ def make_mcprimdf(f):
     mcprimdf = loadbranches(f["recTree"], mcprimbranches)
     return mcprimdf
 
-def make_pandora_df(f, trkScoreCut=False, trkDistCut=10., cutClearCosmic=False, requireFiducial=False, **trkArgs):
+def make_mcprimvisEdf(f):
+    mcprimvisEdf = loadbranches(f["recTree"], mcprimvisEbranches)
+    return mcprimvisEdf
+
+def make_mcprimdaughtersdf(f):
+    mcprimdaughtersdf = loadbranches(f["recTree"], mcprimdaughtersbranches)
+    return mcprimdaughtersdf
+
+def make_pandora_df_calo_update(f, **trkArgs):
+    pandoradf = make_pandora_df(f, trkScoreCut=False, trkDistCut=50., cutClearCosmic=True, requireFiducial=False, updatecalo=True, **trkArgs)
+    return pandoradf
+
+def make_pandora_df(f, trkScoreCut=False, trkDistCut=50., cutClearCosmic=False, requireFiducial=False, updatecalo=False, **trkArgs):
     # load
     trkdf = make_trkdf(f, trkScoreCut, **trkArgs)
+    if updatecalo:
+        # check detector
+        det = loadbranches(f["recTree"], ["rec.hdr.det"]).rec.hdr.det
+        if (1 == det.unique()):
+            det = "SBND"
+        else:
+            det = "ICARUS"
+        #check ismc
+        hdrdf = make_mchdrdf(f)
+        ismc = hdrdf.ismc.iloc[0]
+
+        chi2_pids = []
+        for plane in range(0, 3):
+            trkhitdf = make_trkhitdf(f, plane)
+            if det == "SBND": ## FIXME
+                trkhitdf = trkhitdf[InFV(df = trkhitdf, inzback = 0., det = "SBND_nohighyz")]
+            #dqdx_redo = chi2pid.dqdx(trkhitdf, gain=det, calibrate=det, isMC=ismc)
+            dedx_redo = chi2pid.dedx(trkhitdf, gain=det, calibrate=det, plane=plane, isMC=ismc)
+            dedx_bias = (dedx_redo - trkhitdf.dedx) / trkhitdf.dedx
+            trkhitdf["dedx_redo"] = dedx_redo
+            #trkhitdf["dqdx_redo"] = dqdx_redo
+            #trkhitdf["dedx_bias"] = dedx_bias
+            #print(trkhitdf[trkhitdf.rr < 26.].head(50))
+            for par in ['muon', 'proton']:
+                this_chi2_new, this_chi2_ndof = chi2pid.chi2par(trkhitdf, dedxname="dedx_redo", par=par)
+                this_chi2_col = ('pfp', 'trk', 'chi2pid', 'I' + str(plane), 'chi2_' + par + '_new', '')
+                this_ndof_col = ('pfp', 'trk', 'chi2pid', 'I' + str(plane), 'ndof_' + par + '_new', '')
+                trkdf[this_chi2_col] = this_chi2_new
+                trkdf[this_ndof_col] = this_chi2_ndof
+                trkdf[this_chi2_col] = trkdf[this_chi2_col].fillna(0.)
+                trkdf[this_ndof_col] = trkdf[this_ndof_col].fillna(0)
+
     slcdf = make_slcdf(f)
 
     # merge in tracks
@@ -334,6 +411,7 @@ def make_pandora_df(f, trkScoreCut=False, trkDistCut=10., cutClearCosmic=False, 
     if requireFiducial:
         slcdf = slcdf[InFV(slcdf.slc.vertex, 50)]
 
+    #print(slcdf.pfp.trk.chi2pid.head(50))
     return slcdf
 
 def make_spine_df(f, trkDistCut=-1, requireFiducial=True, **trkArgs):

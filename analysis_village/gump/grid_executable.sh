@@ -14,9 +14,9 @@ pwd
 echo "@@ ls -alh"
 ls -alh
 echo "@@ git clone cafpyana"
-git clone https://github.com/sungbinoh/cafpyana.git
+git clone https://github.com/nathanielerowe/cafpyana_gump.git
 echo "@@ cd to cafpyana dir"
-cd cafpyana
+cd cafpyana_gump
 echo "@@ ls -alh"
 ls -alh
 echo "@@ check if there is cmake"
@@ -54,6 +54,8 @@ ifdh  mkdir_p ${outDir}
 echo "@@ source ${filesFromSender}/run_"${nProcess}".sh "
 ls -alh
 pwd
+
+htgettoken -a htvaultprod.fnal.gov -i sbnd
 
 cp ${filesFromSender}/run_${nProcess}.sh ./
 source run_${nProcess}.sh  &> log_${nProcess}.log
