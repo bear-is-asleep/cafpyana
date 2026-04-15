@@ -5,7 +5,7 @@ from analysis_village.numuincl import makedf1muX as maker
 maker.INCLUDE_WEIGHTS = False
 maker.SLIM = False
 maker.set_update_recomb(False)
-maker.VERBOSE = True
+maker.VERBOSE = False
 maker.apply_setting_dependencies()
 
 _base = import_module('analysis_village.numuincl.configs.base')

@@ -1,5 +1,5 @@
 input_dir: /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/det_var/nominal
-output_dir: /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/det_var/nominal/v5
+output_dir: /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/det_var/nominal/v7
 #output_dir: /pnfs/sbnd/persistent/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/det_var/nominal/v5
 
 jobs:
@@ -14,7 +14,8 @@ jobs:
       - analysis_village.numuincl.makedf1muX.make_custom_trkdf
     names: [hdr, mcnu, evt_pand, trk]
     input_list: nominal_sorted.list
-    output: mc_nominal_nosyst_nocuts_recomb_tiny4
+    #input_files: /pnfs/sbn/data_add/sbn_nd/aurora/mc/v10_06_00_10/cv/000009/000096/reco2-637d-d21a-2167-73ab.flat.caf.root
+    output: mc_nominal_nosyst_nocuts_recomb_full
     settings:
       INCLUDE_WEIGHTS: false
       SLIM: false
@@ -23,4 +24,4 @@ jobs:
     args:
       #ngrid: 0
       ncpu: -1
-      nfile: 1
+      nfile: -1

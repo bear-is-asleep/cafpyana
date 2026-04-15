@@ -18,6 +18,7 @@ import traceback
 from makedf.makedf import make_histpotdf, make_histgenevtdf
 
 CPU_COUNT = multiprocessing.cpu_count()
+HOSTNAME = os.environ.get('HOSTNAME')
 
 if CPU_COUNT == 0:
     CPU_COUNT = os.cpu_count()
@@ -61,7 +62,7 @@ def _loaddf(applyfs, preprocess, g):
     index, fname = g
     og_fname = fname
     # Convert pnfs to xroot URL's
-    if fname.startswith("/pnfs"):
+    if fname.startswith("/pnfs") and "gpvm" not in HOSTNAME: # Don't convert for gpvm
         fname = fname.replace("/pnfs", "root://fndcadoor.fnal.gov:1094/pnfs/fnal.gov/usr")
     # fix xroot URL's
     elif fname.startswith("xroot"):
@@ -89,7 +90,7 @@ def _loaddf(applyfs, preprocess, g):
     # Retry the entire file operation (open, read, close)
     attempts = 1
     sleep = 1.0
-    timeout = 10
+    timeout = 5
     dfs = None
     
     for k in range(attempts):
@@ -162,6 +163,9 @@ def _loaddf(applyfs, preprocess, g):
             else:
                 print(f"All {attempts} attempts failed for {fname}: {type(e).__name__}: {e}", file=sys.stderr, flush=True)
                 print(f"Could not open file ({fname}). Skipping...", file=sys.stderr, flush=True)
+                #Write filename to a list
+                with open(f'/exp/sbnd/app/users/brindenc/develop/cafpyana/analysis_village/numuincl/error_files.list', 'a') as f:
+                    f.write(fname + '\n')
                 traceback.print_exc(file=sys.stderr)
                 dfs = None
 
@@ -183,7 +187,7 @@ class NTupleGlob(object):
                 self.glob = [line.rstrip("\n") for line in f]
         else:
             # Convert /pnfs to xroot URL before globbing
-            if g.startswith("/pnfs"):
+            if g.startswith("/pnfs") and "gpvm" not in HOSTNAME: # Don't convert for gpvm
                 g_xroot = g.replace("/pnfs", "root://fndcadoor.fnal.gov:1094/pnfs/fnal.gov/usr")
                 self.glob = glob.glob(g_xroot)
             else:
@@ -201,7 +205,7 @@ class NTupleGlob(object):
             thisglob = thisglob[:maxfile]
 
         if nproc == "auto":
-            CPU_COUNT_use = int(CPU_COUNT * 0.8)
+            CPU_COUNT_use = int(CPU_COUNT * 0.85)
             nproc = min(CPU_COUNT_use, len(thisglob))
             nproc = 1 if nproc < 1 else nproc
             print("CPU_COUNT : " + str(CPU_COUNT) + ", len(thisglob): " + str(len(thisglob)) + ", nproc: " + str(nproc))

@@ -75,7 +75,7 @@ def make_spine_evtdf_wgt(f,include_weights=None, wgt_types=["bnb","genie"],preli
     else:
         DETECTOR = "ICARUS"
 
-    assert DETECTOR == "SBND"
+    assert DETECTOR == "SBND", f'Detector is {DETECTOR}'
 
     # load header for run, subrun, and event
     hdrdf = make_hdrdf(f)
@@ -172,8 +172,7 @@ def make_pandora_evtdf(f, include_weights=None, wgt_types=["bnb","genie","g4"], 
         DETECTOR = "SBND"
     else:
         DETECTOR = "ICARUS"
-
-    assert DETECTOR == "SBND"
+    #assert DETECTOR == "SBND", f'Detector is {DETECTOR}'
     
     mcdf = make_mcnudf(f, include_weights=include_weights,  wgt_types=wgt_types, slim=slim, multisim_nuniv=multisim_nuniv)
     if return_mcdf: ret_mcdf = mcdf.copy() #Make a copy to return
@@ -181,9 +180,12 @@ def make_pandora_evtdf(f, include_weights=None, wgt_types=["bnb","genie","g4"], 
     trkdf = make_custom_trkdf(f, trkScoreCut=trkScoreCut, updaterecomb=updaterecomb, **trkArgs)
     slcdf = make_slcdf(f)
     hdr = make_hdrdf(f)
+    #print('len of slcdf: ', len(slcdf))
     ismc = hdr.ismc.astype(bool).unique()
     if len(ismc) > 1:
         raise ValueError(f'Multiple ismc values: {ismc}')
+    elif len(ismc) == 0:
+        raise ValueError(f'No ismc values found')
     else:
         ismc = ismc[0]
     hdr = hdr.loc[:,["run","subrun","evt"]]
@@ -287,10 +289,12 @@ def make_pandora_evtdf(f, include_weights=None, wgt_types=["bnb","genie","g4"], 
             if contains_keep:
                 assert len(mudf.columns) == len(CALO_KEEP_COLS), f'Number of columns in mudf {len(mudf.columns)} does not match number of columns in CALO_KEEP_COLS {len(CALO_KEEP_COLS)}'
         
+        mudf = mudf.droplevel(-1)
         mudf.columns = pd.MultiIndex.from_tuples([tuple(["mu" + key_suffix] + list(c)) for c in mudf.columns])
         mudf_list.append(mudf)
 
-    slcdf = multicol_merge(slcdf, pd.concat(mudf_list, axis=1).droplevel(-1), left_index=True, right_index=True, how="left", validate="one_to_one")
+    mudf_concat = pd.concat(mudf_list, axis=1)
+    slcdf = multicol_merge(slcdf, mudf_concat, left_index=True, right_index=True, how="left", validate="one_to_one")
     slcdf = multicol_merge(slcdf, hdr, left_index=True, right_index=True, how="left", validate="one_to_one")
 
     # ----- apply cuts for lightweight df -----
@@ -384,6 +388,8 @@ def make_pandora_evtdf_processed(f, include_weights=None, wgt_types=["bnb","geni
     ismc = hdr.ismc.astype(bool).unique()
     if len(ismc) > 1:
         raise ValueError(f'Multiple ismc values: {ismc}')
+    elif len(ismc) == 0:
+        raise ValueError(f'No ismc values found')
     else:
         ismc = ismc[0]
     slc = CAFSlice(df) 
@@ -427,6 +433,7 @@ def make_pandora_evtdf_processed(f, include_weights=None, wgt_types=["bnb","geni
         truth_totp_col = slc.get_key([f'truth.mu.totp'])[0]
         if mask.sum() > 0:
             slc.data.loc[mask,truth_totp_col] = slc.data.loc[mask,totp_col]
+    #print(f'len of data: {len(slc.data)}')
     slc.add_2d_binning(include_truth=ismc, include_reco=True)
 
 

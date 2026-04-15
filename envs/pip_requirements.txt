@@ -3,6 +3,8 @@ jupyterlab==4.3.5
 numpy==1.26.4
 uproot==5.5.1
 matplotlib
+seaborn
+colorcet
 scipy
 pandas==2.2.2
 awkward-pandas

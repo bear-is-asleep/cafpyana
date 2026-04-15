@@ -9,6 +9,7 @@ mchdrbranches = [
     "rec.hdr.proc",
     "rec.hdr.cluster",
     "rec.hdr.fno",
+    "rec.hdr.bnbinfo.FOM"
 ]
 
 hdrbranches = [
@@ -202,6 +203,7 @@ slcbranches = [
 
 mcbranches = [
     "rec.mc.nu.E",
+    "rec.mc.nu.q0",
     "rec.mc.nu.time",
     "rec.mc.nu.bjorkenX",
     "rec.mc.nu.inelasticityY",

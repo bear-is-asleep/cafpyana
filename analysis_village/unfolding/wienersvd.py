@@ -135,3 +135,51 @@ def WienerSVD(Response, Signal, Measure, Covariance, C_type, Norm_type):
         'UnfoldCov': UnfoldCov,
         'CovRotation': CovRotation
     }
+    
+def Matrix_Decomp(matrix_pred, matrix_syst):
+    """
+    Decompose a covariance matrix into normalization and shape components.
+    Inputs:
+        matrix_pred: 1D numpy array of predicted event counts (length nbins)
+        matrix_syst: 2D numpy array (nbins x nbins) of systematic covariance
+    Returns:
+        (matrix_norm_plus_mixed, matrix_shape): tuple of 2D numpy arrays
+    """
+
+    nbins = len(matrix_pred)
+    matrix_pred = np.asarray(matrix_pred)
+    matrix_syst = np.asarray(matrix_syst)
+
+    # Total predicted events
+    N_T = np.sum(matrix_pred)
+
+    # Total covariance sum
+    M_kl = np.sum(matrix_syst)
+
+    # Initialize output matrices
+    matrix_shape = np.zeros((nbins, nbins))
+    matrix_mixed = np.zeros((nbins, nbins))
+    matrix_norm = np.zeros((nbins, nbins))
+
+    for i in range(nbins):
+        N_i = matrix_pred[i]
+        for j in range(nbins):
+            N_j = matrix_pred[j]
+            M_ij = matrix_syst[i, j]
+            M_ik = np.sum(matrix_syst[i, :])
+            M_kj = np.sum(matrix_syst[:, j])
+            matrix_shape[i, j] = (
+                M_ij
+                - N_j * M_ik / N_T
+                - N_i * M_kj / N_T
+                + N_i * N_j * M_kl / (N_T * N_T)
+            )
+            matrix_mixed[i, j] = (
+                N_j * M_ik / N_T
+                + N_i * M_kj / N_T
+                - 2 * N_i * N_j * M_kl / (N_T * N_T)
+            )
+            matrix_norm[i, j] = N_i * N_j * M_kl / (N_T * N_T)
+
+    matrix_norm_plus_mixed = matrix_norm + matrix_mixed
+    return matrix_norm_plus_mixed, matrix_shape

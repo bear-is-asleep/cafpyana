@@ -49,15 +49,18 @@ def getsyst(f, systematics, nuind, multisim_nuniv=100, slim=False, slimname="sli
 
             if slim:
                 for i in range(multisim_nuniv):
-                    np.random.seed(hash(s+str(i)) % (2**32))
+                    seed_input = s + str(i) + str(id(f))
+                    np.random.seed(hash(seed_input) % (2**32))
                     wgt = 1 + (s_morph - 1) * 2 * np.abs(np.random.normal(0, 1)) # std -> unc.
+                    wgt = np.maximum(wgt, 0)
                     systs_slim[(slimname, f"univ_{i}")] = systs_slim[(slimname, f"univ_{i}")].values * wgt
 
             else:
                 this_systs.append(s_morph)
 
         elif wgt_types[isyst] == 3 and wgt_nuniv[isyst] > 1: # +/- sigma unisim
-            nsigma = wgts[wgts.isyst == isyst].wgt.groupby(level=[0,1]).size().values[0] // 2
+            nwgt = wgts[wgts.isyst == isyst].wgt.groupby(level=[0,1]).size().values[0]
+            nsigma = nwgt // 2
             for isigma in range(nsigma):
                 s_ps = wgts[wgts.isyst == isyst].wgt.groupby(level=[0,1]).nth(2*isigma)
                 s_ps.name = (s, "ps%i" % (isigma+1))
@@ -66,17 +69,23 @@ def getsyst(f, systematics, nuind, multisim_nuniv=100, slim=False, slimname="sli
 
                 if slim and isigma == 0: # use ps1
                     for i in range(multisim_nuniv):
-                        np.random.seed(hash(s+str(i)) % (2**32))
+                        seed_input = s + str(i) + str(id(f))
+                        np.random.seed(hash(seed_input) % (2**32))
                         wgt = 1 + (s_ps - 1) * np.random.normal(0, 1)
+                        wgt = np.maximum(wgt, 0)
                         wgt = wgt.reset_index(level=2, drop=True)  # Drop the 'iwgt' level to match systs_slim index
                         systs_slim[(slimname, f"univ_{i}")] = systs_slim[(slimname, f"univ_{i}")].values * wgt
     
                 else:
                     this_systs.append(s_ps.droplevel(2))
                     this_systs.append(s_ms.droplevel(2))
-
-            # CV for Gundam
-            if nsigma > 0:
+            # check if we also saved the 0-sigma weight. This is conventionally put last
+            if nwgt % 2 != 0:
+                s_cv = wgts[wgts.isyst == isyst].wgt.groupby(level=[0,1]).nth(nwgt-1)
+                s_cv.name = (s, "cv")
+                this_systs.append(s_cv.droplevel(2))
+            # otherwise, assume it's one
+            else:
                 this_systs.append(pd.Series(1, index=this_systs[-1].index, name=(s, "cv")))
 
         elif wgt_types[isyst] == 0: # multisim

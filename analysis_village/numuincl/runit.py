@@ -11,7 +11,7 @@ import shlex
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Dict, Iterable, Optional
+from typing import Any, Dict, Optional
 from sbnd.general.utils import convert_pnfs_to_xroot
 
 import yaml
@@ -73,7 +73,7 @@ def load_config(path: Path) -> Dict[str, Any]:
         data = yaml.safe_load(handle) or {}
     jobs = data.get("jobs")
     if not isinstance(jobs, list):
-        raise SystemExit("mcbnb.yaml must define a top-level 'jobs' list.")
+        raise SystemExit(f"{path.name} must define a top-level 'jobs' list.")
     return data
 
 
@@ -99,6 +99,42 @@ def file_exists(path: str) -> bool:
         return Path(path).exists()
 
 
+def job_ngrid(job: Dict[str, Any]) -> int:
+    raw = job.get("args", {}).get("ngrid", 0)
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return 0
+
+
+def grid_safe_basename(prefix: str) -> str:
+    """One filesystem segment for run_df_maker grid paths (no slashes, no root URL)."""
+    s = (prefix or "").strip()
+    if not s:
+        return "cafpyana_out"
+    if s.startswith("root://"):
+        rest = s[len("root://") :]
+        slash = rest.find("/")
+        path = rest[slash + 1 :] if slash >= 0 else rest
+        base = Path(path.rstrip("/")).name or "cafpyana_out"
+    else:
+        base = Path(s.rstrip("/")).name or s.replace("/", "_").replace(":", "_")
+    safe = "".join(c if (c.isalnum() or c in "-_") else "_" for c in base)
+    return (safe[:200] if safe else "cafpyana_out")
+
+
+def config_path_for_run_df_maker(cfg_path: Path, grid_mode: bool) -> str:
+    """Grid workers unpack the repo tarball; use a path relative to repo root when possible."""
+    cfg_path = cfg_path.resolve()
+    if not grid_mode:
+        return str(cfg_path)
+    try:
+        rel = cfg_path.relative_to(REPO_ROOT)
+    except ValueError:
+        return str(cfg_path)
+    return rel.as_posix()
+
+
 def run_job(
     job: Dict[str, Any],
     yaml_path: Path,
@@ -106,7 +142,7 @@ def run_job(
     input_dir: Optional[str],
     output_dir: Optional[str],
 ) -> None:
-    os.system("source /exp/sbnd/app/users/brindenc/develop/cafpyana/setup.sh") # Source the setup script
+    #os.system("source /exp/sbnd/app/users/brindenc/develop/cafpyana/setup.sh") # Source the setup script
     slug = slugify(job["name"])
     cfg_path = GENERATED_CONFIG_DIR / f"{slug}.py"
     cfg_path.write_text(render_config(job))
@@ -118,14 +154,21 @@ def run_job(
     output = output.format(name=job["name"], slug=slug)
     output = resolve_path(output, output_dir)
     output = output + ".df"  # run_df_maker adds .df extension
-    
-    # Check if output file already exists
-    if file_exists(output):
+
+    ngrid = job_ngrid(job)
+    # Grid writes per-chunk dfs under scratch; skip check only makes sense for pool mode.
+    if ngrid <= 0 and file_exists(output):
         print("=" * 80)
         print(f"[{job['name']}] SKIPPED - Output file already exists:")
         print(f"  {output}")
         print("=" * 80)
         return
+
+    if ngrid > 0 and "generated" in cfg_path.parts:
+        print(
+            f"[{job['name']}] grid: ensure configs/generated/{cfg_path.name} is committed "
+            "so run_df_maker git archive includes it on workers."
+        )
 
     cmd = build_command(job, cfg_path, slug, input_dir, output_dir)
     print("=" * 80)
@@ -145,7 +188,15 @@ def run_job(
     env = os.environ.copy()
     env.setdefault("MAKEDF1MUX_YAML", str(yaml_path))
     env.setdefault("MAKEDF1MUX_JOB", job["name"])
-    subprocess.run(cmd, check=True, env=env)
+    try:
+        subprocess.run(cmd, check=True, env=env, cwd=str(REPO_ROOT))
+    except subprocess.CalledProcessError as exc:
+        print("=" * 80)
+        print(f"[{job['name']}] FAILED with exit code {exc.returncode}")
+        print(f"  Command: {' '.join(shlex.quote(part) for part in cmd)}")
+        print("  Continuing to next job despite failure.")
+        print("=" * 80)
+        # Do not re-raise, so other jobs in the YAML can still run.
 
 
 def render_config(job: Dict[str, Any]) -> str:
@@ -205,7 +256,15 @@ def build_command(
         raise SystemExit(f"Job '{job['name']}' missing output field.")
     output = output.format(name=job["name"], slug=slug)
     output = resolve_path(output, output_dir)
-    cmd = [sys.executable, str(RUN_DF_MAKER), "-c", str(cfg_path), "-o", output]
+    ngrid = job_ngrid(job)
+    # run_df_maker grid mode embeds -o in local log paths; full XRootD or deep paths break mkdir.
+    if ngrid > 0:
+        base = grid_safe_basename(output)
+        output_for_cli = f"{slug}_{base}" if base else slug
+    else:
+        output_for_cli = output
+    cfg_arg = config_path_for_run_df_maker(cfg_path, grid_mode=ngrid > 0)
+    cmd = [sys.executable, str(RUN_DF_MAKER), "-c", cfg_arg, "-o", output_for_cli]
 
     if job.get("input_list"):
         input_list = resolve_path(job["input_list"], input_dir)
@@ -225,6 +284,10 @@ def build_command(
     for key, flag in FLAG_MAP.items():
         if key in args:
             cmd.extend([flag, str(args[key])])
+    # Boolean keep-local flag: when truthy in YAML, add -keeplocal with no value
+    keeplocal = args.get("keeplocal")
+    if keeplocal in (True, "true", "True", 1, "1"):
+        cmd.append("-keeplocal")
     if extra := args.get("extra"):
         cmd.extend(extra)
     return cmd

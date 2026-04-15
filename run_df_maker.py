@@ -40,6 +40,7 @@ parser.add_argument('-ncpu', dest='NCPU', default=-1, type=int, help="Number of 
 parser.add_argument('-ngrid', dest='NGridJobs', default=0, type=int, help="Number of grid jobs. Default = 0, no grid submission.")
 parser.add_argument('-nfile', dest='NFiles', default=0, type=int, help="Number of files to run. Default = 0, run all input files.")
 parser.add_argument('-split', dest='SplitSize', default=1.0, type=float, help="Split size in GB before writing to HDF5. Default = 1.0 GB.")
+parser.add_argument('-keeplocal', dest='KeepLocal', action='store_true', help="Keep local temp output file after successful XRootD copy.")
 
 args = parser.parse_args()
 
@@ -60,24 +61,58 @@ def run_pool(output, inputs, nproc):
     # Handle XRootD output paths - write to temp file first, then copy
     is_xrootd = output.startswith("root://")
     if is_xrootd:
-        # Create temp file in system temp directory
-        temp_dir = tempfile.gettempdir()
+        # Choose a temp directory based on the XRootD target path. If the target
+        # path is under a PNFS SBND prefix, mirror that layout under /exp/sbnd/data/...
+        # so the temp file sits in an organized, large local area. Otherwise,
+        # fall back to the system temp directory.
+        default_temp_dir = tempfile.gettempdir()
+        temp_dir = default_temp_dir
+
+        # Extract host and path from XRootD URL:
+        # root://host:port/path/to/file  -> host_port="host:port", xrootd_path="/path/to/file"
+        rest = output[len("root://"):]
+        host_port, sep, path_after_host = rest.partition("/")
+        if sep:
+            xrootd_path = "/" + path_after_host
+        else:
+            xrootd_path = "/"
+
+        # Mirror known PNFS prefixes under /exp/sbnd/data when possible. For SBND we
+        # want PNFS paths like:
+        #   /pnfs/fnal.gov/usr/sbnd/persistent/users/...
+        # to map to local temp paths like:
+        #   /exp/sbnd/data/users/...
+        mapping_rules = [
+            ("/pnfs/fnal.gov/usr/sbnd/persistent/users", "/exp/sbnd/data/users"),
+            ("/pnfs/sbnd/persistent/users", "/exp/sbnd/data/users"),
+            ("/pnfs/fnal.gov/usr/sbnd", "/exp/sbnd/data"),
+            ("/pnfs/sbnd", "/exp/sbnd/data"),
+        ]
+        for pnfs_prefix, exp_prefix in mapping_rules:
+            if xrootd_path.startswith(pnfs_prefix):
+                mapped_path = exp_prefix + xrootd_path[len(pnfs_prefix):]
+                mapped_dir = os.path.dirname(mapped_path)
+                try:
+                    Path(mapped_dir).mkdir(parents=True, exist_ok=True)
+                    temp_dir = mapped_dir
+                except Exception as e:
+                    print(f"Warning: Could not create mapped temp directory {mapped_dir}: {e}")
+                break
+
+        # Ensure we also create the remote directory on XRootD
+        xrootd_dir = os.path.dirname(xrootd_path)
+        print(f"Creating XRootD directory: {xrootd_dir} on {host_port}")
+        mkdir_cmd = f"xrdfs {host_port} mkdir -p {xrootd_dir}"
+        result = os.system(mkdir_cmd)
+        if result != 0:
+            print(f"Warning: Could not create XRootD directory (may already exist): {xrootd_dir}")
+
+        # Final local temp file path
+        Path(temp_dir).mkdir(parents=True, exist_ok=True)
         temp_filename = os.path.basename(output)
         local_output = os.path.join(temp_dir, temp_filename)
         print(f"Writing to temporary local file: {local_output}")
         print(f"Will copy to XRootD location: {output}")
-        # Extract directory path from XRootD URL (everything after root://host:port/)
-        # Format: root://host:port/path/to/file
-        parts = output.split("/", 4)  # Split into ['root:', '', 'host:port', 'path', 'to', 'file']
-        if len(parts) >= 4:
-            xrootd_path = "/" + parts[3]  # Get the path part
-            xrootd_dir = os.path.dirname(xrootd_path)
-            host_port = parts[2]  # e.g., "fndcadoor.fnal.gov:1094"
-            print(f"Creating XRootD directory: {xrootd_dir} on {host_port}")
-            mkdir_cmd = f"xrdfs {host_port} mkdir -p {xrootd_dir}"
-            result = os.system(mkdir_cmd)
-            if result != 0:
-                print(f"Warning: Could not create XRootD directory (may already exist): {xrootd_dir}")
     else:
         local_output = output
         # Ensure local directory exists
@@ -142,17 +177,18 @@ def run_pool(output, inputs, nproc):
     # If writing to XRootD, copy the file now
     if is_xrootd:
         print(f"Copying {local_output} to {output}")
-        copy_cmd = f"xrdcp {local_output} {output}"
+        copy_cmd = f"xrdcp -f {local_output} {output}"
         result = os.system(copy_cmd)
         if result != 0:
             raise RuntimeError(f"Failed to copy file to XRootD location: {output}")
         print(f"Successfully copied to {output}")
-        # Clean up temp file
-        try:
-            os.remove(local_output)
-            print(f"Removed temporary file: {local_output}")
-        except Exception as e:
-            print(f"Warning: Could not remove temporary file {local_output}: {e}")
+        # Clean up temp file unless the user asked to keep it
+        if not args.KeepLocal:
+            try:
+                os.remove(local_output)
+                print(f"Removed temporary file: {local_output}")
+            except Exception as e:
+                print(f"Warning: Could not remove temporary file {local_output}: {e}")
 
 def run_grid(inputfiles):
     # 1) dir/file name style
@@ -179,20 +215,21 @@ def run_grid(inputfiles):
         flistForEachJob.append( [] )
 
     for i_line in range(0,len(inputfiles)):
-        flistForEachJob[i_line%ngrid].append(inputfiles[i])
+        flistForEachJob[i_line%ngrid].append(inputfiles[i_line])
 
     for i_flist in range(0,len(flistForEachJob)):
         flist = flistForEachJob[i_flist]
         out = open(MasterJobDir + '/run_%s.sh'%(i_flist),'w')
         out.write('#!/bin/bash\n')
-        cmd = 'python run_df_maker.py -c ' + args.config + ' -o ' + args.output + '_%d'%i_flist + '.df -i'
+        cmd = 'python run_df_maker.py -c ' + args.config + ' -o ' + args.output + '_%d'%i_flist + '.df -ncpu 7 -i'
         for i_f in range(0,len(flist)):
             out.write('echo "[run_%s.sh] input %d : %s"\n'%(i_flist, i_f, flist[i_f]))
             if i_f == 0:
-                cmd += ' ' + flist[i_f]
+                cmd += ' ' + flist[i_f].split('/')[-1]
             else: 
-                cmd += ',' + flist[i_f]
-            #out.write('xrdcp ' + flist[i_f] + ' .\n') ## -- for checking auth
+                cmd += ',' + flist[i_f].split('/')[-1]
+            out.write('xrdcp ' + flist[i_f] + ' .\n') ## -- for checking auth
+        out.write('ls -alh\n')
         out.write(cmd)
         out.close()
 
@@ -200,11 +237,16 @@ def run_grid(inputfiles):
 
     # 5) prepare a package for xrootd
     CAFPYANA_WD = os.environ['CAFPYANA_WD']
-    cp_XRootD = "cp -r " + CAFPYANA_WD + "/envs/xrootd-5.6.1/build/lib.linux-x86_64-3.9/XRootD " + MasterJobDir
-    cp_pyxrootd = "cp -r " + CAFPYANA_WD + "/envs/xrootd-5.6.1/build/lib.linux-x86_64-3.9/pyxrootd " + MasterJobDir
+    cp_XRootD = "cp -r " + CAFPYANA_WD + "/envs/xrootd-5.6.9/build/lib.linux-x86_64-cpython-310/XRootD " + MasterJobDir
+    cp_pyxrootd = "cp -r " + CAFPYANA_WD + "/envs/xrootd-5.6.9/build/lib.linux-x86_64-cpython-310/pyxrootd " + MasterJobDir
     os.system(cp_XRootD)
     os.system(cp_pyxrootd)
 
+    # 6) git archive of the current branch's last commit
+    archive_repo = "git archive -o " + MasterJobDir + "/cafpyana.tar.gz HEAD"
+    os.system(archive_repo)
+
+    # 7) move to MasterJobDir to submit jobs
     os.chdir(MasterJobDir)
     tar_cmd = 'tar cf bin_dir.tar ./'
     os.system(tar_cmd)
@@ -215,12 +257,15 @@ def run_grid(inputfiles):
 -e LC_ALL=C \\
 --role=Analysis \\
 --resource-provides="usage_model=DEDICATED,OPPORTUNISTIC" \\
+-l '+SingularityImage=\\"/cvmfs/singularity.opensciencegrid.org/fermilab/fnal-wn-el9\:9.7\\"' \\
 --lines '+FERMIHTC_AutoRelease=True' --lines '+FERMIHTC_GraceMemory=1000' --lines '+FERMIHTC_GraceLifetime=3600' \\
 --append_condor_requirements='(TARGET.HAS_SINGULARITY=?=true)' \\
 --tar_file_name "dropbox://$(pwd)/bin_dir.tar" \\
 -N %d \\
 --disk 100GB \\
---expected-lifetime 10h \\
+--cpu 7 \\
+--memory 2GB \\
+--expected-lifetime 1h \\
 "file://$(pwd)/grid_executable.sh" \\
 "%s" \\
 "%s"'''%(ngrid,OutputDir,args.output)
