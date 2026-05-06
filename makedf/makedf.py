@@ -38,6 +38,8 @@ TRUE_KE_THRESHOLDS = {"nmu_27MeV": ["muon", 0.027],
                       "npi_25MeV": ["pipm", 0.025],
                       "npi0_0MeV": ["pizero", 0.0],
                       "nk_25MeV": ["kaon_p", 0.025],
+                      "nmu_800MeV": ["muon", 0.8],
+                      "nmu_1GeV": ["muon", 1.0],
                       }
 
 def make_hdrdf(f):
