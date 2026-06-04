@@ -2,6 +2,9 @@
 import os,sys,time
 import datetime
 import tempfile
+import fnmatch
+import tarfile
+import shlex
 #from TimeTools import *
 import argparse
 import tables
@@ -41,8 +44,40 @@ parser.add_argument('-ngrid', dest='NGridJobs', default=0, type=int, help="Numbe
 parser.add_argument('-nfile', dest='NFiles', default=0, type=int, help="Number of files to run. Default = 0, run all input files.")
 parser.add_argument('-split', dest='SplitSize', default=1.0, type=float, help="Split size in GB before writing to HDF5. Default = 1.0 GB.")
 parser.add_argument('-keeplocal', dest='KeepLocal', action='store_true', help="Keep local temp output file after successful XRootD copy.")
+parser.add_argument('-memory', dest='Memory', default=2, type=int, help="Memory in GB to request for each grid job. Default = 2 GB.")
 
 args = parser.parse_args()
+
+def _grid_archive_filter(tarinfo):
+    parts = Path(tarinfo.name).parts
+    if parts and parts[0] == ".":
+        parts = parts[1:]
+    if not parts:
+        return tarinfo
+
+    if any(part in {".git", "__pycache__", ".pytest_cache", ".mypy_cache"} for part in parts):
+        return None
+
+    if "envs" in parts:
+        if len(parts) == 1 or parts == ("envs", "pip_requirements.txt"):
+            return tarinfo
+        return None
+
+    name = parts[-1]
+    excluded_patterns = ("*.df", "*.root", "*.png", "*.pyc", "*.swp", "*~", "*.cursor")
+    if any(fnmatch.fnmatch(name, pattern) for pattern in excluded_patterns):
+        return None
+
+    return tarinfo
+
+def make_grid_archive(source_dir, output_path):
+    with tarfile.open(output_path, "w:gz", dereference=True) as archive:
+        archive.add(source_dir, arcname=".", filter=_grid_archive_filter)
+
+def grid_input_copy_source(path):
+    if path.startswith("/pnfs/"):
+        return path.replace("/pnfs", "root://fndcadoor.fnal.gov:1094/pnfs/fnal.gov/usr", 1)
+    return path
 
 def run_pool(output, inputs, nproc):
     os.nice(10)
@@ -56,7 +91,7 @@ def run_pool(output, inputs, nproc):
         PREPROCESS = []
 
     dfss = ntuples.dataframes(nproc=nproc, fs=DFS, preprocess=PREPROCESS)
-    output = output + ".df"
+    output = output if output.endswith(".df") else output + ".df"
     
     # Handle XRootD output paths - write to temp file first, then copy
     is_xrootd = output.startswith("root://")
@@ -224,11 +259,13 @@ def run_grid(inputfiles):
         cmd = 'python run_df_maker.py -c ' + args.config + ' -o ' + args.output + '_%d'%i_flist + '.df -ncpu 7 -i'
         for i_f in range(0,len(flist)):
             out.write('echo "[run_%s.sh] input %d : %s"\n'%(i_flist, i_f, flist[i_f]))
+            copy_source = grid_input_copy_source(flist[i_f])
+            local_input = flist[i_f].rstrip('/').split('/')[-1]
             if i_f == 0:
-                cmd += ' ' + flist[i_f].split('/')[-1]
+                cmd += ' ' + local_input
             else: 
-                cmd += ',' + flist[i_f].split('/')[-1]
-            out.write('xrdcp ' + flist[i_f] + ' .\n') ## -- for checking auth
+                cmd += ',' + local_input
+            out.write('xrdcp ' + shlex.quote(copy_source) + ' .\n') ## -- for checking auth
         out.write('ls -alh\n')
         out.write(cmd)
         out.close()
@@ -242,9 +279,8 @@ def run_grid(inputfiles):
     os.system(cp_XRootD)
     os.system(cp_pyxrootd)
 
-    # 6) git archive of the current branch's last commit
-    archive_repo = "git archive -o " + MasterJobDir + "/cafpyana.tar.gz HEAD"
-    os.system(archive_repo)
+    # 6) Archive the current working tree, including uncommitted fixes and generated configs.
+    make_grid_archive(CAFPYANA_WD, MasterJobDir + "/cafpyana.tar.gz")
 
     # 7) move to MasterJobDir to submit jobs
     os.chdir(MasterJobDir)
@@ -258,17 +294,17 @@ def run_grid(inputfiles):
 --role=Analysis \\
 --resource-provides="usage_model=DEDICATED,OPPORTUNISTIC" \\
 -l '+SingularityImage=\\"/cvmfs/singularity.opensciencegrid.org/fermilab/fnal-wn-el9\:9.7\\"' \\
---lines '+FERMIHTC_AutoRelease=True' --lines '+FERMIHTC_GraceMemory=1000' --lines '+FERMIHTC_GraceLifetime=3600' \\
+--lines '+FERMIHTC_AutoRelease=True' --lines '+FERMIHTC_GraceMemory=2000' --lines '+FERMIHTC_GraceLifetime=3600' \\
 --append_condor_requirements='(TARGET.HAS_SINGULARITY=?=true)' \\
 --tar_file_name "dropbox://$(pwd)/bin_dir.tar" \\
 -N %d \\
 --disk 100GB \\
 --cpu 7 \\
---memory 2GB \\
+--memory %dGB \\
 --expected-lifetime 1h \\
 "file://$(pwd)/grid_executable.sh" \\
 "%s" \\
-"%s"'''%(ngrid,OutputDir,args.output)
+"%s"''' % (ngrid, args.Memory, OutputDir, args.output)
 
     print(submitCMD)
     os.system(submitCMD)

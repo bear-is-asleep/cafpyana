@@ -1,0 +1,712 @@
+Wrote normalization to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/metadata/normalization.json
+Using normalization from /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/metadata/normalization.json
+--scaling to POT (9.02e-01): 6.60e+18 -> 5.95e+18
+--scaling to livetime (1.01e+00): 8.70e+05 --> 9.51e+05
+---scale factor without f: 1.0931e+00
+--- f: 0.0725
+Processing cut precut with chain ['precut']
+--scaling to livetime (1.10e+00): 8.62e+05 --> 9.51e+05
+--scaling to livetime (1.10e+00): 8.62e+05 --> 9.51e+05
+--scaling to livetime (1.10e+00): 8.62e+05 --> 9.51e+05
+--scaling to livetime (1.10e+00): 8.62e+05 --> 9.51e+05
+--scaling to POT (4.35e+00): 1.37e+18 -> 5.95e+18
+[debug-pot] var=pmtgain n_common=2138066 event_ratio_nominal=0.697781 event_ratio_var=0.970372 POT_NOMINAL=7.328791e+18 POT_DET=5.453557e+18 POT_DATA=5.949648e+18 json_POT_NOMINAL_FILTERED=1.0197556092779962e+20 json_POT_DET_SCALED=1.0310607372694356e+20
+--scaling to POT (1.24e+00): 4.79e+18 -> 5.95e+18
+[debug-pot] var=pmtgain mode=cv chunk=0 n_mc_before=243101 n_mc_after=158884 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.653572 event_ratio_json=0.697781 sample_pot=7.328791e+18 pot_eff=4.789892e+18 scale_factor=1.242126e+00 genweight_mc_sig_before=9.347000e+03 after=1.242126e+00
+--scaling to POT (1.26e+00): 4.73e+18 -> 5.95e+18
+[debug-pot] var=pmtgain mode=cv chunk=0 n_mc_before=244630 n_mc_after=158012 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.645922 event_ratio_json=0.697781 sample_pot=7.328791e+18 pot_eff=4.733830e+18 scale_factor=1.256836e+00 genweight_mc_sig_before=9.402000e+03 after=1.256836e+00
+--scaling to POT (1.23e+00): 4.82e+18 -> 5.95e+18
+[debug-pot] var=pmtgain mode=cv chunk=0 n_mc_before=247077 n_mc_after=162574 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.657989 event_ratio_json=0.697781 sample_pot=7.328791e+18 pot_eff=4.822265e+18 scale_factor=1.233787e+00 genweight_mc_sig_before=9.607000e+03 after=1.233787e+00
+--scaling to POT (1.26e+00): 4.72e+18 -> 5.95e+18
+[debug-pot] var=pmtgain mode=cv chunk=0 n_mc_before=30418 n_mc_after=19592 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.644092 event_ratio_json=0.697781 sample_pot=7.328791e+18 pot_eff=4.720418e+18 scale_factor=1.260407e+00 genweight_mc_sig_before=1.136000e+03 after=0.000000e+00
+WARNING: No data for CAF
+WARNING: No data for CAF
+--scaling to POT (1.25e+00): 4.77e+18 -> 5.95e+18
+[debug-pot] var=pmtgain mode=variation chunk=0 n_mc_before=178629 n_mc_after=156202 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.874449 event_ratio_json=0.970372 sample_pot=5.453557e+18 pot_eff=4.768859e+18 scale_factor=1.247604e+00 genweight_mc_sig_before=6.823000e+03 after=0.000000e+00
+WARNING: No data for CAF
+--scaling to POT (1.24e+00): 4.78e+18 -> 5.95e+18
+[debug-pot] var=pmtgain mode=variation chunk=1 n_mc_before=180444 n_mc_after=158247 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.876987 event_ratio_json=0.970372 sample_pot=5.453557e+18 pot_eff=4.782697e+18 scale_factor=1.243994e+00 genweight_mc_sig_before=6.921000e+03 after=0.000000e+00
+WARNING: No data for CAF
+--scaling to POT (1.24e+00): 4.80e+18 -> 5.95e+18
+[debug-pot] var=pmtgain mode=variation chunk=2 n_mc_before=179618 n_mc_after=158136 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.880402 event_ratio_json=0.970372 sample_pot=5.453557e+18 pot_eff=4.801321e+18 scale_factor=1.239169e+00 genweight_mc_sig_before=6.921000e+03 after=1.239169e+00
+--scaling to POT (1.25e+00): 4.75e+18 -> 5.95e+18
+[debug-pot] var=pmtgain mode=variation chunk=3 n_mc_before=23048 n_mc_after=20095 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.871876 event_ratio_json=0.970372 sample_pot=5.453557e+18 pot_eff=4.754826e+18 scale_factor=1.251286e+00 genweight_mc_sig_before=8.860000e+02 after=0.000000e+00
+WARNING: No data for CAF
+[debug-pot] var=pmtgain aggregate cv n_before=765226 n_after=499062 filter_frac=0.652176 n_aux_before=0 n_aux_after=1580352 genweight_mc_sig=3.732748e+00
+[debug-pot] var=pmtgain aggregate variation n_before=561739 n_after=492680 filter_frac=0.877062 n_aux_before=0 n_aux_after=1580352 genweight_mc_sig=1.239169e+00
+[debug-pot] var=pmtgain costheta_sel_sum=2.329310e+05
+[debug-pot] var=pmtqe n_common=2325932 event_ratio_nominal=0.759093 event_ratio_var=0.970365 POT_NOMINAL=7.328791e+18 POT_DET=5.832949e+18 POT_DATA=5.949648e+18 json_POT_NOMINAL_FILTERED=1.1093587400010983e+20 json_POT_DET_SCALED=1.1129694638167106e+20
+--scaling to POT (1.15e+00): 5.18e+18 -> 5.95e+18
+[debug-pot] var=pmtqe mode=cv chunk=0 n_mc_before=243101 n_mc_after=171984 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.707459 event_ratio_json=0.759093 sample_pot=7.328791e+18 pot_eff=5.184819e+18 scale_factor=1.147513e+00 genweight_mc_sig_before=9.347000e+03 after=0.000000e+00
+WARNING: No data for CAF
+WARNING: No data for CAF
+--scaling to POT (1.13e+00): 5.28e+18 -> 5.95e+18
+[debug-pot] var=pmtqe mode=cv chunk=0 n_mc_before=244630 n_mc_after=176087 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.719810 event_ratio_json=0.759093 sample_pot=7.328791e+18 pot_eff=5.275333e+18 scale_factor=1.127824e+00 genweight_mc_sig_before=9.402000e+03 after=1.127824e+00
+--scaling to POT (1.13e+00): 5.26e+18 -> 5.95e+18
+[debug-pot] var=pmtqe mode=cv chunk=0 n_mc_before=247077 n_mc_after=177382 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.717922 event_ratio_json=0.759093 sample_pot=7.328791e+18 pot_eff=5.261500e+18 scale_factor=1.130789e+00 genweight_mc_sig_before=9.607000e+03 after=1.130789e+00
+--scaling to POT (1.16e+00): 5.12e+18 -> 5.95e+18
+[debug-pot] var=pmtqe mode=cv chunk=0 n_mc_before=30418 n_mc_after=21268 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.699191 event_ratio_json=0.759093 sample_pot=7.328791e+18 pot_eff=5.124226e+18 scale_factor=1.161082e+00 genweight_mc_sig_before=1.136000e+03 after=0.000000e+00
+WARNING: No data for CAF
+WARNING: No data for CAF
+--scaling to POT (1.17e+00): 5.10e+18 -> 5.95e+18
+[debug-pot] var=pmtqe mode=variation chunk=0 n_mc_before=194984 n_mc_after=170520 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.874533 event_ratio_json=0.970365 sample_pot=5.832949e+18 pot_eff=5.101108e+18 scale_factor=1.166344e+00 genweight_mc_sig_before=7.551000e+03 after=0.000000e+00
+WARNING: No data for CAF
+--scaling to POT (1.16e+00): 5.12e+18 -> 5.95e+18
+[debug-pot] var=pmtqe mode=variation chunk=1 n_mc_before=192382 n_mc_after=168836 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.877608 event_ratio_json=0.970365 sample_pot=5.832949e+18 pot_eff=5.119043e+18 scale_factor=1.162258e+00 genweight_mc_sig_before=7.377000e+03 after=1.162258e+00
+--scaling to POT (1.16e+00): 5.11e+18 -> 5.95e+18
+[debug-pot] var=pmtqe mode=variation chunk=2 n_mc_before=192445 n_mc_after=168732 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.876780 event_ratio_json=0.970365 sample_pot=5.832949e+18 pot_eff=5.114215e+18 scale_factor=1.163355e+00 genweight_mc_sig_before=7.320000e+03 after=0.000000e+00
+WARNING: No data for CAF
+--scaling to POT (1.15e+00): 5.19e+18 -> 5.95e+18
+[debug-pot] var=pmtqe mode=variation chunk=3 n_mc_before=24279 n_mc_after=21591 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.889287 event_ratio_json=0.970365 sample_pot=5.832949e+18 pot_eff=5.187166e+18 scale_factor=1.146994e+00 genweight_mc_sig_before=9.150000e+02 after=0.000000e+00
+WARNING: No data for CAF
+[debug-pot] var=pmtqe aggregate cv n_before=765226 n_after=546721 filter_frac=0.714457 n_aux_before=0 n_aux_after=1580352 genweight_mc_sig=2.258613e+00
+[debug-pot] var=pmtqe aggregate variation n_before=604090 n_after=529679 filter_frac=0.876821 n_aux_before=0 n_aux_after=1580352 genweight_mc_sig=1.162258e+00
+[debug-pot] var=pmtqe costheta_sel_sum=2.331048e+05
+[debug-pot] var=pmtspe n_common=2057011 event_ratio_nominal=0.671327 event_ratio_var=0.970687 POT_NOMINAL=7.328791e+18 POT_DET=5.121451e+18 POT_DATA=5.949648e+18 json_POT_NOMINAL_FILTERED=9.810962363166245e+19 json_POT_DET_SCALED=9.930991181044164e+19
+--scaling to POT (1.32e+00): 4.52e+18 -> 5.95e+18
+[debug-pot] var=pmtspe mode=cv chunk=0 n_mc_before=243101 n_mc_after=150077 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.617344 event_ratio_json=0.671327 sample_pot=7.328791e+18 pot_eff=4.524387e+18 scale_factor=1.315017e+00 genweight_mc_sig_before=9.347000e+03 after=0.000000e+00
+WARNING: No data for CAF
+WARNING: No data for CAF
+--scaling to POT (1.31e+00): 4.54e+18 -> 5.95e+18
+[debug-pot] var=pmtspe mode=cv chunk=0 n_mc_before=244630 n_mc_after=151676 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.620022 event_ratio_json=0.671327 sample_pot=7.328791e+18 pot_eff=4.544012e+18 scale_factor=1.309338e+00 genweight_mc_sig_before=9.402000e+03 after=1.309338e+00
+--scaling to POT (1.31e+00): 4.55e+18 -> 5.95e+18
+[debug-pot] var=pmtspe mode=cv chunk=0 n_mc_before=247077 n_mc_after=153298 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.620446 event_ratio_json=0.671327 sample_pot=7.328791e+18 pot_eff=4.547121e+18 scale_factor=1.308443e+00 genweight_mc_sig_before=9.607000e+03 after=1.308443e+00
+--scaling to POT (1.29e+00): 4.61e+18 -> 5.95e+18
+[debug-pot] var=pmtspe mode=cv chunk=0 n_mc_before=30418 n_mc_after=19141 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.629266 event_ratio_json=0.671327 sample_pot=7.328791e+18 pot_eff=4.611756e+18 scale_factor=1.290105e+00 genweight_mc_sig_before=1.136000e+03 after=0.000000e+00
+WARNING: No data for CAF
+WARNING: No data for CAF
+--scaling to POT (1.33e+00): 4.49e+18 -> 5.95e+18
+[debug-pot] var=pmtspe mode=variation chunk=0 n_mc_before=170952 n_mc_after=149799 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.876264 event_ratio_json=0.970687 sample_pot=5.121451e+18 pot_eff=4.487741e+18 scale_factor=1.325756e+00 genweight_mc_sig_before=6.533000e+03 after=0.000000e+00
+WARNING: No data for CAF
+--scaling to POT (1.32e+00): 4.52e+18 -> 5.95e+18
+[debug-pot] var=pmtspe mode=variation chunk=1 n_mc_before=168934 n_mc_after=148953 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.881723 event_ratio_json=0.970687 sample_pot=5.121451e+18 pot_eff=4.515701e+18 scale_factor=1.317547e+00 genweight_mc_sig_before=6.495000e+03 after=1.317547e+00
+--scaling to POT (1.33e+00): 4.49e+18 -> 5.95e+18
+[debug-pot] var=pmtspe mode=variation chunk=2 n_mc_before=166460 n_mc_after=145837 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.876108 event_ratio_json=0.970687 sample_pot=5.121451e+18 pot_eff=4.486946e+18 scale_factor=1.325990e+00 genweight_mc_sig_before=6.496000e+03 after=0.000000e+00
+WARNING: No data for CAF
+--scaling to POT (1.32e+00): 4.50e+18 -> 5.95e+18
+[debug-pot] var=pmtspe mode=variation chunk=3 n_mc_before=21656 n_mc_after=19016 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.878094 event_ratio_json=0.970687 sample_pot=5.121451e+18 pot_eff=4.497114e+18 scale_factor=1.322992e+00 genweight_mc_sig_before=8.130000e+02 after=0.000000e+00
+WARNING: No data for CAF
+[debug-pot] var=pmtspe aggregate cv n_before=765226 n_after=474192 filter_frac=0.619676 n_aux_before=0 n_aux_after=1580352 genweight_mc_sig=2.617781e+00
+[debug-pot] var=pmtspe aggregate variation n_before=528002 n_after=463605 filter_frac=0.878036 n_aux_before=0 n_aux_after=1580352 genweight_mc_sig=1.317547e+00
+[debug-pot] var=pmtspe costheta_sel_sum=2.321891e+05
+[debug-pot] var=nosce n_common=2855846 event_ratio_nominal=0.932036 event_ratio_var=0.970105 POT_NOMINAL=7.328791e+18 POT_DET=6.985935e+18 POT_DATA=5.949648e+18 json_POT_NOMINAL_FILTERED=1.362102469116542e+20 json_POT_DET_SCALED=1.3527294754617688e+20
+--scaling to POT (9.56e-01): 6.22e+18 -> 5.95e+18
+[debug-pot] var=nosce mode=cv chunk=0 n_mc_before=243101 n_mc_after=206396 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.849013 event_ratio_json=0.932036 sample_pot=7.328791e+18 pot_eff=6.222241e+18 scale_factor=9.561904e-01 genweight_mc_sig_before=9.347000e+03 after=9.561904e-01
+--scaling to POT (9.54e-01): 6.24e+18 -> 5.95e+18
+[debug-pot] var=nosce mode=cv chunk=0 n_mc_before=244630 n_mc_after=208199 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.851077 event_ratio_json=0.932036 sample_pot=7.328791e+18 pot_eff=6.237366e+18 scale_factor=9.538718e-01 genweight_mc_sig_before=9.402000e+03 after=9.538718e-01
+--scaling to POT (9.55e-01): 6.23e+18 -> 5.95e+18
+[debug-pot] var=nosce mode=cv chunk=0 n_mc_before=247077 n_mc_after=209928 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.849646 event_ratio_json=0.932036 sample_pot=7.328791e+18 pot_eff=6.226878e+18 scale_factor=9.554784e-01 genweight_mc_sig_before=9.607000e+03 after=9.554784e-01
+--scaling to POT (9.31e-01): 6.39e+18 -> 5.95e+18
+[debug-pot] var=nosce mode=cv chunk=0 n_mc_before=30418 n_mc_after=26534 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.872312 event_ratio_json=0.932036 sample_pot=7.328791e+18 pot_eff=6.392995e+18 scale_factor=9.306510e-01 genweight_mc_sig_before=1.136000e+03 after=0.000000e+00
+WARNING: No data for CAF
+WARNING: No data for CAF
+--scaling to POT (9.69e-01): 6.14e+18 -> 5.95e+18
+[debug-pot] var=nosce mode=variation chunk=0 n_mc_before=237128 n_mc_after=208488 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.879221 event_ratio_json=0.970105 sample_pot=6.985935e+18 pot_eff=6.142183e+18 scale_factor=9.686536e-01 genweight_mc_sig_before=9.090000e+03 after=9.686536e-01
+--scaling to POT (9.70e-01): 6.13e+18 -> 5.95e+18
+[debug-pot] var=nosce mode=variation chunk=1 n_mc_before=236799 n_mc_after=207937 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.878116 event_ratio_json=0.970105 sample_pot=6.985935e+18 pot_eff=6.134462e+18 scale_factor=9.698728e-01 genweight_mc_sig_before=9.101000e+03 after=0.000000e+00
+WARNING: No data for CAF
+--scaling to POT (9.68e-01): 6.15e+18 -> 5.95e+18
+[debug-pot] var=nosce mode=variation chunk=2 n_mc_before=233128 n_mc_after=205079 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.879684 event_ratio_json=0.970105 sample_pot=6.985935e+18 pot_eff=6.145416e+18 scale_factor=9.681440e-01 genweight_mc_sig_before=9.004000e+03 after=0.000000e+00
+WARNING: No data for CAF
+--scaling to POT (9.76e-01): 6.09e+18 -> 5.95e+18
+[debug-pot] var=nosce mode=variation chunk=3 n_mc_before=30032 n_mc_after=26194 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.872203 event_ratio_json=0.970105 sample_pot=6.985935e+18 pot_eff=6.093153e+18 scale_factor=9.764480e-01 genweight_mc_sig_before=1.145000e+03 after=0.000000e+00
+WARNING: No data for CAF
+[debug-pot] var=nosce aggregate cv n_before=765226 n_after=651057 filter_frac=0.850804 n_aux_before=0 n_aux_after=1580352 genweight_mc_sig=2.865541e+00
+[debug-pot] var=nosce aggregate variation n_before=737087 n_after=647698 filter_frac=0.878727 n_aux_before=0 n_aux_after=1580352 genweight_mc_sig=9.686536e-01
+[debug-pot] var=nosce costheta_sel_sum=2.341036e+05
+[debug-pot] var=twicesce n_common=3002824 event_ratio_nominal=0.980004 event_ratio_var=0.970413 POT_NOMINAL=7.328791e+18 POT_DET=7.364232e+18 POT_DATA=5.949648e+18 json_POT_NOMINAL_FILTERED=1.432203972035751e+20 json_POT_DET_SCALED=1.4275344613962713e+20
+--scaling to POT (9.19e-01): 6.47e+18 -> 5.95e+18
+[debug-pot] var=twicesce mode=cv chunk=0 n_mc_before=243101 n_mc_after=214718 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.883246 event_ratio_json=0.980004 sample_pot=7.328791e+18 pot_eff=6.473126e+18 scale_factor=9.191306e-01 genweight_mc_sig_before=9.347000e+03 after=9.191306e-01
+--scaling to POT (9.15e-01): 6.50e+18 -> 5.95e+18
+[debug-pot] var=twicesce mode=cv chunk=0 n_mc_before=244630 n_mc_after=216982 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.886980 event_ratio_json=0.980004 sample_pot=7.328791e+18 pot_eff=6.500493e+18 scale_factor=9.152609e-01 genweight_mc_sig_before=9.402000e+03 after=9.152609e-01
+--scaling to POT (9.20e-01): 6.46e+18 -> 5.95e+18
+[debug-pot] var=twicesce mode=cv chunk=0 n_mc_before=247077 n_mc_after=217951 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.882118 event_ratio_json=0.980004 sample_pot=7.328791e+18 pot_eff=6.464856e+18 scale_factor=9.203063e-01 genweight_mc_sig_before=9.607000e+03 after=9.203063e-01
+--scaling to POT (9.12e-01): 6.52e+18 -> 5.95e+18
+[debug-pot] var=twicesce mode=cv chunk=0 n_mc_before=30418 n_mc_after=27068 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.889868 event_ratio_json=0.980004 sample_pot=7.328791e+18 pot_eff=6.521655e+18 scale_factor=9.122910e-01 genweight_mc_sig_before=1.136000e+03 after=0.000000e+00
+WARNING: No data for CAF
+WARNING: No data for CAF
+--scaling to POT (9.20e-01): 6.47e+18 -> 5.95e+18
+[debug-pot] var=twicesce mode=variation chunk=0 n_mc_before=248668 n_mc_after=218327 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.877986 event_ratio_json=0.970413 sample_pot=7.364232e+18 pot_eff=6.465691e+18 scale_factor=9.201874e-01 genweight_mc_sig_before=9.475000e+03 after=0.000000e+00
+WARNING: No data for CAF
+--scaling to POT (9.21e-01): 6.46e+18 -> 5.95e+18
+[debug-pot] var=twicesce mode=variation chunk=1 n_mc_before=245320 n_mc_after=215104 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.876830 event_ratio_json=0.970413 sample_pot=7.364232e+18 pot_eff=6.457181e+18 scale_factor=9.214002e-01 genweight_mc_sig_before=9.530000e+03 after=0.000000e+00
+WARNING: No data for CAF
+--scaling to POT (9.27e-01): 6.42e+18 -> 5.95e+18
+[debug-pot] var=twicesce mode=variation chunk=2 n_mc_before=245130 n_mc_after=213580 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.871293 event_ratio_json=0.970413 sample_pot=7.364232e+18 pot_eff=6.416402e+18 scale_factor=9.272561e-01 genweight_mc_sig_before=9.378000e+03 after=0.000000e+00
+WARNING: No data for CAF
+--scaling to POT (9.27e-01): 6.42e+18 -> 5.95e+18
+[debug-pot] var=twicesce mode=variation chunk=3 n_mc_before=30708 n_mc_after=26775 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.871923 event_ratio_json=0.970413 sample_pot=7.364232e+18 pot_eff=6.421040e+18 scale_factor=9.265863e-01 genweight_mc_sig_before=1.235000e+03 after=9.265863e-01
+[debug-pot] var=twicesce aggregate cv n_before=765226 n_after=676719 filter_frac=0.884339 n_aux_before=0 n_aux_after=1580352 genweight_mc_sig=2.754698e+00
+[debug-pot] var=twicesce aggregate variation n_before=769826 n_after=673786 filter_frac=0.875245 n_aux_before=0 n_aux_after=1580352 genweight_mc_sig=9.265863e-01
+[debug-pot] var=twicesce costheta_sel_sum=2.338669e+05
+[debug-pot] var=wiremodxtheta n_common=2311746 event_ratio_nominal=0.754463 event_ratio_var=0.979359 POT_NOMINAL=7.328791e+18 POT_DET=5.641030e+18 POT_DATA=5.949648e+18 json_POT_NOMINAL_FILTERED=1.102592693923373e+20 json_POT_DET_SCALED=1.0998102162947953e+20
+--scaling to POT (1.15e+00): 5.17e+18 -> 5.95e+18
+[debug-pot] var=wiremodxtheta mode=cv chunk=0 n_mc_before=243101 n_mc_after=171346 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.704835 event_ratio_json=0.754463 sample_pot=7.328791e+18 pot_eff=5.165585e+18 scale_factor=1.151786e+00 genweight_mc_sig_before=9.347000e+03 after=1.151786e+00
+--scaling to POT (1.15e+00): 5.19e+18 -> 5.95e+18
+[debug-pot] var=wiremodxtheta mode=cv chunk=0 n_mc_before=244630 n_mc_after=173283 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.708347 event_ratio_json=0.754463 sample_pot=7.328791e+18 pot_eff=5.191329e+18 scale_factor=1.146074e+00 genweight_mc_sig_before=9.402000e+03 after=0.000000e+00
+WARNING: No data for CAF
+WARNING: No data for CAF
+--scaling to POT (1.15e+00): 5.19e+18 -> 5.95e+18
+[debug-pot] var=wiremodxtheta mode=cv chunk=0 n_mc_before=247077 n_mc_after=175093 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.708658 event_ratio_json=0.754463 sample_pot=7.328791e+18 pot_eff=5.193603e+18 scale_factor=1.145572e+00 genweight_mc_sig_before=9.607000e+03 after=0.000000e+00
+WARNING: No data for CAF
+WARNING: No data for CAF
+--scaling to POT (1.09e+00): 5.44e+18 -> 5.95e+18
+[debug-pot] var=wiremodxtheta mode=cv chunk=0 n_mc_before=30418 n_mc_after=22583 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.742422 event_ratio_json=0.754463 sample_pot=7.328791e+18 pot_eff=5.441057e+18 scale_factor=1.093473e+00 genweight_mc_sig_before=1.136000e+03 after=0.000000e+00
+WARNING: No data for CAF
+WARNING: No data for CAF
+--scaling to POT (1.19e+00): 4.99e+18 -> 5.95e+18
+[debug-pot] var=wiremodxtheta mode=variation chunk=0 n_mc_before=188563 n_mc_after=166923 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.885237 event_ratio_json=0.979359 sample_pot=5.641030e+18 pot_eff=4.993650e+18 scale_factor=1.191443e+00 genweight_mc_sig_before=7.254000e+03 after=1.191443e+00
+--scaling to POT (1.20e+00): 4.96e+18 -> 5.95e+18
+[debug-pot] var=wiremodxtheta mode=variation chunk=1 n_mc_before=189240 n_mc_after=166251 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.878519 event_ratio_json=0.979359 sample_pot=5.641030e+18 pot_eff=4.955754e+18 scale_factor=1.200553e+00 genweight_mc_sig_before=7.260000e+03 after=0.000000e+00
+WARNING: No data for CAF
+--scaling to POT (1.20e+00): 4.94e+18 -> 5.95e+18
+[debug-pot] var=wiremodxtheta mode=variation chunk=2 n_mc_before=190034 n_mc_after=166435 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.875817 event_ratio_json=0.979359 sample_pot=5.641030e+18 pot_eff=4.940510e+18 scale_factor=1.204258e+00 genweight_mc_sig_before=7.277000e+03 after=1.204258e+00
+--scaling to POT (1.17e+00): 5.08e+18 -> 5.95e+18
+[debug-pot] var=wiremodxtheta mode=variation chunk=3 n_mc_before=23075 n_mc_after=20763 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.899805 event_ratio_json=0.979359 sample_pot=5.641030e+18 pot_eff=5.075827e+18 scale_factor=1.172153e+00 genweight_mc_sig_before=8.720000e+02 after=0.000000e+00
+WARNING: No data for CAF
+[debug-pot] var=wiremodxtheta aggregate cv n_before=765226 n_after=542305 filter_frac=0.708686 n_aux_before=0 n_aux_after=1580352 genweight_mc_sig=1.151786e+00
+[debug-pot] var=wiremodxtheta aggregate variation n_before=590912 n_after=520372 filter_frac=0.880625 n_aux_before=0 n_aux_after=1580352 genweight_mc_sig=2.395700e+00
+[debug-pot] var=wiremodxtheta costheta_sel_sum=2.337352e+05
+[debug-pot] var=wiremodyz n_common=2310983 event_ratio_nominal=0.754214 event_ratio_var=0.979332 POT_NOMINAL=7.328791e+18 POT_DET=5.636172e+18 POT_DATA=5.949648e+18 json_POT_NOMINAL_FILTERED=1.102228779278138e+20 json_POT_DET_SCALED=1.0994532543156562e+20
+--scaling to POT (1.15e+00): 5.17e+18 -> 5.95e+18
+[debug-pot] var=wiremodyz mode=cv chunk=0 n_mc_before=243101 n_mc_after=171327 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.704756 event_ratio_json=0.754214 sample_pot=7.328791e+18 pot_eff=5.165013e+18 scale_factor=1.151913e+00 genweight_mc_sig_before=9.347000e+03 after=1.151913e+00
+--scaling to POT (1.15e+00): 5.18e+18 -> 5.95e+18
+[debug-pot] var=wiremodyz mode=cv chunk=0 n_mc_before=244630 n_mc_after=172882 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.706708 event_ratio_json=0.754214 sample_pot=7.328791e+18 pot_eff=5.179316e+18 scale_factor=1.148732e+00 genweight_mc_sig_before=9.402000e+03 after=0.000000e+00
+WARNING: No data for CAF
+WARNING: No data for CAF
+--scaling to POT (1.15e+00): 5.19e+18 -> 5.95e+18
+[debug-pot] var=wiremodyz mode=cv chunk=0 n_mc_before=247077 n_mc_after=175076 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.708589 event_ratio_json=0.754214 sample_pot=7.328791e+18 pot_eff=5.193099e+18 scale_factor=1.145683e+00 genweight_mc_sig_before=9.607000e+03 after=0.000000e+00
+WARNING: No data for CAF
+WARNING: No data for CAF
+--scaling to POT (1.09e+00): 5.43e+18 -> 5.95e+18
+[debug-pot] var=wiremodyz mode=cv chunk=0 n_mc_before=30418 n_mc_after=22553 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.741436 event_ratio_json=0.754214 sample_pot=7.328791e+18 pot_eff=5.433829e+18 scale_factor=1.094927e+00 genweight_mc_sig_before=1.136000e+03 after=0.000000e+00
+WARNING: No data for CAF
+WARNING: No data for CAF
+--scaling to POT (1.20e+00): 4.95e+18 -> 5.95e+18
+[debug-pot] var=wiremodyz mode=variation chunk=0 n_mc_before=189955 n_mc_after=166698 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.877566 event_ratio_json=0.979332 sample_pot=5.636172e+18 pot_eff=4.946111e+18 scale_factor=1.202894e+00 genweight_mc_sig_before=7.211000e+03 after=0.000000e+00
+WARNING: No data for CAF
+--scaling to POT (1.21e+00): 4.92e+18 -> 5.95e+18
+[debug-pot] var=wiremodyz mode=variation chunk=1 n_mc_before=189943 n_mc_after=165959 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.873731 event_ratio_json=0.979332 sample_pot=5.636172e+18 pot_eff=4.924495e+18 scale_factor=1.208174e+00 genweight_mc_sig_before=7.230000e+03 after=1.208174e+00
+--scaling to POT (1.21e+00): 4.93e+18 -> 5.95e+18
+[debug-pot] var=wiremodyz mode=variation chunk=2 n_mc_before=189262 n_mc_after=165693 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.875469 event_ratio_json=0.979332 sample_pot=5.636172e+18 pot_eff=4.934293e+18 scale_factor=1.205775e+00 genweight_mc_sig_before=7.253000e+03 after=0.000000e+00
+WARNING: No data for CAF
+--scaling to POT (1.17e+00): 5.09e+18 -> 5.95e+18
+[debug-pot] var=wiremodyz mode=variation chunk=3 n_mc_before=23705 n_mc_after=21423 n_aux_on_input=0 n_aux_after_combine=395088 filter_frac=0.903733 event_ratio_json=0.979332 sample_pot=5.636172e+18 pot_eff=5.093596e+18 scale_factor=1.168064e+00 genweight_mc_sig_before=8.870000e+02 after=0.000000e+00
+WARNING: No data for CAF
+[debug-pot] var=wiremodyz aggregate cv n_before=765226 n_after=541838 filter_frac=0.708076 n_aux_before=0 n_aux_after=1580352 genweight_mc_sig=1.151913e+00
+[debug-pot] var=wiremodyz aggregate variation n_before=592865 n_after=519773 filter_frac=0.876714 n_aux_before=0 n_aux_after=1580352 genweight_mc_sig=1.208174e+00
+[debug-pot] var=wiremodyz costheta_sel_sum=2.338089e+05
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saved costheta universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saved momentum universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saved differential universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saved bcfm universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saved flashpe universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saved startx universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saved starty universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saved startz universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saved endx universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saved endy universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saved endz universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saved phi universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saved theta universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saved length universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saved vtxx universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saved vtyy universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Saved vtzx universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/precut
+Processing cut flashpe with chain ['precut', 'flashpe']
+Applied cut on key: cut.flashpe (1,093,315 --> 650,306)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+--scaling to livetime (1.10e+00): 8.62e+05 --> 9.51e+05
+Applied cut on key: cut.flashpe (50,943 --> 30,295)
+--scaling to livetime (1.10e+00): 8.62e+05 --> 9.51e+05
+Applied cut on key: cut.flashpe (51,450 --> 31,167)
+--scaling to livetime (1.10e+00): 8.62e+05 --> 9.51e+05
+Applied cut on key: cut.flashpe (51,501 --> 30,700)
+--scaling to livetime (1.10e+00): 8.62e+05 --> 9.51e+05
+Applied cut on key: cut.flashpe (6,657 --> 3,970)
+--scaling to POT (4.35e+00): 1.37e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (300,091 --> 261,741)
+[debug-pot] var=pmtgain n_common=2138066 event_ratio_nominal=0.697781 event_ratio_var=0.970372 POT_NOMINAL=7.328791e+18 POT_DET=5.453557e+18 POT_DATA=5.949648e+18 json_POT_NOMINAL_FILTERED=1.0197556092779962e+20 json_POT_DET_SCALED=1.0310607372694356e+20
+Applied cut on key: cut.flashpe (243,101 --> 173,457)
+--scaling to POT (1.29e+00): 4.60e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=pmtgain mode=cv chunk=0 n_mc_before=173457 n_mc_after=108888 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.627752 event_ratio_json=0.697781 sample_pot=7.328791e+18 pot_eff=4.600664e+18 scale_factor=1.293215e+00 genweight_mc_sig_before=9.288000e+03 after=1.293215e+00
+Applied cut on key: cut.flashpe (244,630 --> 175,397)
+--scaling to POT (1.31e+00): 4.54e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=pmtgain mode=cv chunk=0 n_mc_before=175397 n_mc_after=108771 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.620142 event_ratio_json=0.697781 sample_pot=7.328791e+18 pot_eff=4.544889e+18 scale_factor=1.309085e+00 genweight_mc_sig_before=9.348000e+03 after=1.309085e+00
+Applied cut on key: cut.flashpe (247,077 --> 177,071)
+--scaling to POT (1.29e+00): 4.63e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=pmtgain mode=cv chunk=0 n_mc_before=177071 n_mc_after=111772 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.631227 event_ratio_json=0.697781 sample_pot=7.328791e+18 pot_eff=4.626131e+18 scale_factor=1.286096e+00 genweight_mc_sig_before=9.564000e+03 after=1.286096e+00
+Applied cut on key: cut.flashpe (30,418 --> 21,644)
+--scaling to POT (1.31e+00): 4.54e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=pmtgain mode=cv chunk=0 n_mc_before=21644 n_mc_after=13418 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.619941 event_ratio_json=0.697781 sample_pot=7.328791e+18 pot_eff=4.543417e+18 scale_factor=1.309510e+00 genweight_mc_sig_before=1.129000e+03 after=0.000000e+00
+WARNING: No data for CAF
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (178,629 --> 127,545)
+--scaling to POT (1.30e+00): 4.58e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=pmtgain mode=variation chunk=0 n_mc_before=127545 n_mc_after=107194 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.840441 event_ratio_json=0.970372 sample_pot=5.453557e+18 pot_eff=4.583391e+18 scale_factor=1.298089e+00 genweight_mc_sig_before=6.783000e+03 after=0.000000e+00
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (180,444 --> 129,276)
+--scaling to POT (1.30e+00): 4.59e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=pmtgain mode=variation chunk=1 n_mc_before=129276 n_mc_after=108849 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.841989 event_ratio_json=0.970372 sample_pot=5.453557e+18 pot_eff=4.591836e+18 scale_factor=1.295701e+00 genweight_mc_sig_before=6.880000e+03 after=0.000000e+00
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (179,618 --> 128,330)
+--scaling to POT (1.29e+00): 4.61e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=pmtgain mode=variation chunk=2 n_mc_before=128330 n_mc_after=108486 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.845367 event_ratio_json=0.970372 sample_pot=5.453557e+18 pot_eff=4.610259e+18 scale_factor=1.290523e+00 genweight_mc_sig_before=6.884000e+03 after=1.290523e+00
+Applied cut on key: cut.flashpe (23,048 --> 16,672)
+--scaling to POT (1.30e+00): 4.58e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=pmtgain mode=variation chunk=3 n_mc_before=16672 n_mc_after=13988 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.839012 event_ratio_json=0.970372 sample_pot=5.453557e+18 pot_eff=4.575597e+18 scale_factor=1.300300e+00 genweight_mc_sig_before=8.820000e+02 after=0.000000e+00
+WARNING: No data for CAF
+[debug-pot] var=pmtgain aggregate cv n_before=547569 n_after=342849 filter_frac=0.626129 n_aux_before=0 n_aux_after=639024 genweight_mc_sig=3.888396e+00
+[debug-pot] var=pmtgain aggregate variation n_before=401823 n_after=338517 filter_frac=0.842453 n_aux_before=0 n_aux_after=639024 genweight_mc_sig=1.290523e+00
+[debug-pot] var=pmtgain costheta_sel_sum=1.017540e+05
+[debug-pot] var=pmtqe n_common=2325932 event_ratio_nominal=0.759093 event_ratio_var=0.970365 POT_NOMINAL=7.328791e+18 POT_DET=5.832949e+18 POT_DATA=5.949648e+18 json_POT_NOMINAL_FILTERED=1.1093587400010983e+20 json_POT_DET_SCALED=1.1129694638167106e+20
+Applied cut on key: cut.flashpe (243,101 --> 173,457)
+--scaling to POT (1.19e+00): 4.98e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=pmtqe mode=cv chunk=0 n_mc_before=173457 n_mc_after=117859 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.679471 event_ratio_json=0.759093 sample_pot=7.328791e+18 pot_eff=4.979701e+18 scale_factor=1.194780e+00 genweight_mc_sig_before=9.288000e+03 after=0.000000e+00
+WARNING: No data for CAF
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (244,630 --> 175,397)
+--scaling to POT (1.17e+00): 5.07e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=pmtqe mode=cv chunk=0 n_mc_before=175397 n_mc_after=121248 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.691278 event_ratio_json=0.759093 sample_pot=7.328791e+18 pot_eff=5.066228e+18 scale_factor=1.174374e+00 genweight_mc_sig_before=9.348000e+03 after=1.174374e+00
+Applied cut on key: cut.flashpe (247,077 --> 177,071)
+--scaling to POT (1.18e+00): 5.06e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=pmtqe mode=cv chunk=0 n_mc_before=177071 n_mc_after=122324 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.690819 event_ratio_json=0.759093 sample_pot=7.328791e+18 pot_eff=5.062867e+18 scale_factor=1.175154e+00 genweight_mc_sig_before=9.564000e+03 after=1.175154e+00
+Applied cut on key: cut.flashpe (30,418 --> 21,644)
+--scaling to POT (1.21e+00): 4.92e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=pmtqe mode=cv chunk=0 n_mc_before=21644 n_mc_after=14541 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.671826 event_ratio_json=0.759093 sample_pot=7.328791e+18 pot_eff=4.923671e+18 scale_factor=1.208376e+00 genweight_mc_sig_before=1.129000e+03 after=0.000000e+00
+WARNING: No data for CAF
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (194,984 --> 124,974)
+--scaling to POT (1.22e+00): 4.87e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=pmtqe mode=variation chunk=0 n_mc_before=124974 n_mc_after=104258 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.834238 event_ratio_json=0.970365 sample_pot=5.832949e+18 pot_eff=4.866065e+18 scale_factor=1.222682e+00 genweight_mc_sig_before=7.411000e+03 after=0.000000e+00
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (192,382 --> 123,615)
+--scaling to POT (1.21e+00): 4.90e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=pmtqe mode=variation chunk=1 n_mc_before=123615 n_mc_after=103793 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.839647 event_ratio_json=0.970365 sample_pot=5.832949e+18 pot_eff=4.897620e+18 scale_factor=1.214804e+00 genweight_mc_sig_before=7.239000e+03 after=1.214804e+00
+Applied cut on key: cut.flashpe (192,445 --> 123,269)
+--scaling to POT (1.22e+00): 4.88e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=pmtqe mode=variation chunk=2 n_mc_before=123269 n_mc_after=103175 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.836991 event_ratio_json=0.970365 sample_pot=5.832949e+18 pot_eff=4.882124e+18 scale_factor=1.218660e+00 genweight_mc_sig_before=7.178000e+03 after=0.000000e+00
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (24,279 --> 15,421)
+--scaling to POT (1.20e+00): 4.96e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=pmtqe mode=variation chunk=3 n_mc_before=15421 n_mc_after=13120 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.850788 event_ratio_json=0.970365 sample_pot=5.832949e+18 pot_eff=4.962602e+18 scale_factor=1.198897e+00 genweight_mc_sig_before=8.970000e+02 after=0.000000e+00
+WARNING: No data for CAF
+[debug-pot] var=pmtqe aggregate cv n_before=547569 n_after=375972 filter_frac=0.686620 n_aux_before=0 n_aux_after=639024 genweight_mc_sig=2.349528e+00
+[debug-pot] var=pmtqe aggregate variation n_before=387279 n_after=324346 filter_frac=0.837500 n_aux_before=0 n_aux_after=639024 genweight_mc_sig=1.214804e+00
+[debug-pot] var=pmtqe costheta_sel_sum=9.743111e+04
+[debug-pot] var=pmtspe n_common=2057011 event_ratio_nominal=0.671327 event_ratio_var=0.970687 POT_NOMINAL=7.328791e+18 POT_DET=5.121451e+18 POT_DATA=5.949648e+18 json_POT_NOMINAL_FILTERED=9.810962363166245e+19 json_POT_DET_SCALED=9.930991181044164e+19
+Applied cut on key: cut.flashpe (243,101 --> 173,457)
+--scaling to POT (1.37e+00): 4.35e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=pmtspe mode=cv chunk=0 n_mc_before=173457 n_mc_after=102897 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.593213 event_ratio_json=0.671327 sample_pot=7.328791e+18 pot_eff=4.347536e+18 scale_factor=1.368510e+00 genweight_mc_sig_before=9.288000e+03 after=0.000000e+00
+WARNING: No data for CAF
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (244,630 --> 175,397)
+--scaling to POT (1.36e+00): 4.36e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=pmtspe mode=cv chunk=0 n_mc_before=175397 n_mc_after=104430 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.595392 event_ratio_json=0.671327 sample_pot=7.328791e+18 pot_eff=4.363505e+18 scale_factor=1.363502e+00 genweight_mc_sig_before=9.348000e+03 after=1.363502e+00
+Applied cut on key: cut.flashpe (247,077 --> 177,071)
+--scaling to POT (1.36e+00): 4.38e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=pmtspe mode=cv chunk=0 n_mc_before=177071 n_mc_after=105788 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.597433 event_ratio_json=0.671327 sample_pot=7.328791e+18 pot_eff=4.378459e+18 scale_factor=1.358845e+00 genweight_mc_sig_before=9.564000e+03 after=1.358845e+00
+Applied cut on key: cut.flashpe (30,418 --> 21,644)
+--scaling to POT (1.34e+00): 4.43e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=pmtspe mode=cv chunk=0 n_mc_before=21644 n_mc_after=13072 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.603955 event_ratio_json=0.671327 sample_pot=7.328791e+18 pot_eff=4.426259e+18 scale_factor=1.344171e+00 genweight_mc_sig_before=1.129000e+03 after=0.000000e+00
+WARNING: No data for CAF
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (170,952 --> 122,557)
+--scaling to POT (1.38e+00): 4.31e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=pmtspe mode=variation chunk=0 n_mc_before=122557 n_mc_after=103225 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.842261 event_ratio_json=0.970687 sample_pot=5.121451e+18 pot_eff=4.313599e+18 scale_factor=1.379277e+00 genweight_mc_sig_before=6.502000e+03 after=0.000000e+00
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (168,934 --> 121,306)
+--scaling to POT (1.37e+00): 4.34e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=pmtspe mode=variation chunk=1 n_mc_before=121306 n_mc_after=102830 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.847691 event_ratio_json=0.970687 sample_pot=5.121451e+18 pot_eff=4.341408e+18 scale_factor=1.370442e+00 genweight_mc_sig_before=6.461000e+03 after=1.370442e+00
+Applied cut on key: cut.flashpe (166,460 --> 118,705)
+--scaling to POT (1.38e+00): 4.31e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=pmtspe mode=variation chunk=2 n_mc_before=118705 n_mc_after=99832 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.841009 event_ratio_json=0.970687 sample_pot=5.121451e+18 pot_eff=4.307187e+18 scale_factor=1.381330e+00 genweight_mc_sig_before=6.459000e+03 after=0.000000e+00
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (21,656 --> 15,397)
+--scaling to POT (1.38e+00): 4.32e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=pmtspe mode=variation chunk=3 n_mc_before=15397 n_mc_after=12977 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.842827 event_ratio_json=0.970687 sample_pot=5.121451e+18 pot_eff=4.316495e+18 scale_factor=1.378352e+00 genweight_mc_sig_before=8.100000e+02 after=0.000000e+00
+WARNING: No data for CAF
+[debug-pot] var=pmtspe aggregate cv n_before=547569 n_after=326187 filter_frac=0.595700 n_aux_before=0 n_aux_after=639024 genweight_mc_sig=2.722347e+00
+[debug-pot] var=pmtspe aggregate variation n_before=377965 n_after=318864 filter_frac=0.843634 n_aux_before=0 n_aux_after=639024 genweight_mc_sig=1.370442e+00
+[debug-pot] var=pmtspe costheta_sel_sum=1.012405e+05
+[debug-pot] var=nosce n_common=2855846 event_ratio_nominal=0.932036 event_ratio_var=0.970105 POT_NOMINAL=7.328791e+18 POT_DET=6.985935e+18 POT_DATA=5.949648e+18 json_POT_NOMINAL_FILTERED=1.362102469116542e+20 json_POT_DET_SCALED=1.3527294754617688e+20
+Applied cut on key: cut.flashpe (243,101 --> 173,457)
+--scaling to POT (9.94e-01): 5.98e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=nosce mode=cv chunk=0 n_mc_before=173457 n_mc_after=141616 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.816433 event_ratio_json=0.932036 sample_pot=7.328791e+18 pot_eff=5.983466e+18 scale_factor=9.943481e-01 genweight_mc_sig_before=9.288000e+03 after=9.943481e-01
+Applied cut on key: cut.flashpe (244,630 --> 175,397)
+--scaling to POT (9.93e-01): 5.99e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=nosce mode=cv chunk=0 n_mc_before=175397 n_mc_after=143442 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.817813 event_ratio_json=0.932036 sample_pot=7.328791e+18 pot_eff=5.993583e+18 scale_factor=9.926697e-01 genweight_mc_sig_before=9.348000e+03 after=9.926697e-01
+Applied cut on key: cut.flashpe (247,077 --> 177,071)
+--scaling to POT (9.94e-01): 5.98e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=nosce mode=cv chunk=0 n_mc_before=177071 n_mc_after=144583 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.816526 event_ratio_json=0.932036 sample_pot=7.328791e+18 pot_eff=5.984145e+18 scale_factor=9.942352e-01 genweight_mc_sig_before=9.564000e+03 after=9.942352e-01
+Applied cut on key: cut.flashpe (30,418 --> 21,644)
+--scaling to POT (9.68e-01): 6.15e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=nosce mode=cv chunk=0 n_mc_before=21644 n_mc_after=18150 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.838570 event_ratio_json=0.932036 sample_pot=7.328791e+18 pot_eff=6.145701e+18 scale_factor=9.680991e-01 genweight_mc_sig_before=1.129000e+03 after=0.000000e+00
+WARNING: No data for CAF
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (237,128 --> 169,512)
+--scaling to POT (1.01e+00): 5.90e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=nosce mode=variation chunk=0 n_mc_before=169512 n_mc_after=143121 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.844312 event_ratio_json=0.970105 sample_pot=6.985935e+18 pot_eff=5.898308e+18 scale_factor=1.008704e+00 genweight_mc_sig_before=9.043000e+03 after=1.008704e+00
+Applied cut on key: cut.flashpe (236,799 --> 169,738)
+--scaling to POT (1.01e+00): 5.89e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=nosce mode=variation chunk=1 n_mc_before=169738 n_mc_after=143142 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.843311 event_ratio_json=0.970105 sample_pot=6.985935e+18 pot_eff=5.891319e+18 scale_factor=1.009901e+00 genweight_mc_sig_before=9.047000e+03 after=0.000000e+00
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (233,128 --> 166,626)
+--scaling to POT (1.01e+00): 5.90e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=nosce mode=variation chunk=2 n_mc_before=166626 n_mc_after=140778 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.844874 event_ratio_json=0.970105 sample_pot=6.985935e+18 pot_eff=5.902236e+18 scale_factor=1.008033e+00 genweight_mc_sig_before=8.950000e+03 after=0.000000e+00
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (30,032 --> 21,369)
+--scaling to POT (1.02e+00): 5.85e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=nosce mode=variation chunk=3 n_mc_before=21369 n_mc_after=17896 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.837475 event_ratio_json=0.970105 sample_pot=6.985935e+18 pot_eff=5.850545e+18 scale_factor=1.016939e+00 genweight_mc_sig_before=1.139000e+03 after=0.000000e+00
+WARNING: No data for CAF
+[debug-pot] var=nosce aggregate cv n_before=547569 n_after=447791 filter_frac=0.817780 n_aux_before=0 n_aux_after=639024 genweight_mc_sig=2.981253e+00
+[debug-pot] var=nosce aggregate variation n_before=527245 n_after=444937 filter_frac=0.843890 n_aux_before=0 n_aux_after=639024 genweight_mc_sig=1.008704e+00
+[debug-pot] var=nosce costheta_sel_sum=1.022265e+05
+[debug-pot] var=twicesce n_common=3002824 event_ratio_nominal=0.980004 event_ratio_var=0.970413 POT_NOMINAL=7.328791e+18 POT_DET=7.364232e+18 POT_DATA=5.949648e+18 json_POT_NOMINAL_FILTERED=1.432203972035751e+20 json_POT_DET_SCALED=1.4275344613962713e+20
+Applied cut on key: cut.flashpe (243,101 --> 173,457)
+--scaling to POT (9.57e-01): 6.22e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=twicesce mode=cv chunk=0 n_mc_before=173457 n_mc_after=147134 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.848245 event_ratio_json=0.980004 sample_pot=7.328791e+18 pot_eff=6.216609e+18 scale_factor=9.570568e-01 genweight_mc_sig_before=9.288000e+03 after=9.570568e-01
+Applied cut on key: cut.flashpe (244,630 --> 175,397)
+--scaling to POT (9.53e-01): 6.25e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=twicesce mode=cv chunk=0 n_mc_before=175397 n_mc_after=149482 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.852249 event_ratio_json=0.980004 sample_pot=7.328791e+18 pot_eff=6.245958e+18 scale_factor=9.525597e-01 genweight_mc_sig_before=9.348000e+03 after=9.525597e-01
+Applied cut on key: cut.flashpe (247,077 --> 177,071)
+--scaling to POT (9.57e-01): 6.21e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=twicesce mode=cv chunk=0 n_mc_before=177071 n_mc_after=150144 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.847931 event_ratio_json=0.980004 sample_pot=7.328791e+18 pot_eff=6.214309e+18 scale_factor=9.574109e-01 genweight_mc_sig_before=9.564000e+03 after=9.574109e-01
+Applied cut on key: cut.flashpe (30,418 --> 21,644)
+--scaling to POT (9.49e-01): 6.27e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=twicesce mode=cv chunk=0 n_mc_before=21644 n_mc_after=18512 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.855295 event_ratio_json=0.980004 sample_pot=7.328791e+18 pot_eff=6.268276e+18 scale_factor=9.491680e-01 genweight_mc_sig_before=1.129000e+03 after=0.000000e+00
+WARNING: No data for CAF
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (248,668 --> 177,603)
+--scaling to POT (9.58e-01): 6.21e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=twicesce mode=variation chunk=0 n_mc_before=177603 n_mc_after=149851 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.843741 event_ratio_json=0.970413 sample_pot=7.364232e+18 pot_eff=6.213507e+18 scale_factor=9.575346e-01 genweight_mc_sig_before=9.420000e+03 after=0.000000e+00
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (245,320 --> 175,362)
+--scaling to POT (9.59e-01): 6.21e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=twicesce mode=variation chunk=1 n_mc_before=175362 n_mc_after=147798 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.842817 event_ratio_json=0.970413 sample_pot=7.364232e+18 pot_eff=6.206696e+18 scale_factor=9.585853e-01 genweight_mc_sig_before=9.470000e+03 after=0.000000e+00
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (245,130 --> 175,100)
+--scaling to POT (9.65e-01): 6.17e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=twicesce mode=variation chunk=2 n_mc_before=175100 n_mc_after=146616 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.837327 event_ratio_json=0.970413 sample_pot=7.364232e+18 pot_eff=6.166272e+18 scale_factor=9.648695e-01 genweight_mc_sig_before=9.325000e+03 after=0.000000e+00
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (30,708 --> 22,133)
+--scaling to POT (9.64e-01): 6.17e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=twicesce mode=variation chunk=3 n_mc_before=22133 n_mc_after=18546 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.837934 event_ratio_json=0.970413 sample_pot=7.364232e+18 pot_eff=6.170742e+18 scale_factor=9.641705e-01 genweight_mc_sig_before=1.232000e+03 after=9.641705e-01
+[debug-pot] var=twicesce aggregate cv n_before=547569 n_after=465272 filter_frac=0.849705 n_aux_before=0 n_aux_after=639024 genweight_mc_sig=2.867027e+00
+[debug-pot] var=twicesce aggregate variation n_before=550198 n_after=462811 filter_frac=0.841172 n_aux_before=0 n_aux_after=639024 genweight_mc_sig=9.641705e-01
+[debug-pot] var=twicesce costheta_sel_sum=1.023915e+05
+[debug-pot] var=wiremodxtheta n_common=2311746 event_ratio_nominal=0.754463 event_ratio_var=0.979359 POT_NOMINAL=7.328791e+18 POT_DET=5.641030e+18 POT_DATA=5.949648e+18 json_POT_NOMINAL_FILTERED=1.102592693923373e+20 json_POT_DET_SCALED=1.0998102162947953e+20
+Applied cut on key: cut.flashpe (243,101 --> 173,457)
+--scaling to POT (1.20e+00): 4.96e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=wiremodxtheta mode=cv chunk=0 n_mc_before=173457 n_mc_after=117470 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.677228 event_ratio_json=0.754463 sample_pot=7.328791e+18 pot_eff=4.963265e+18 scale_factor=1.198737e+00 genweight_mc_sig_before=9.288000e+03 after=1.198737e+00
+Applied cut on key: cut.flashpe (244,630 --> 175,397)
+--scaling to POT (1.19e+00): 4.98e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=wiremodxtheta mode=cv chunk=0 n_mc_before=175397 n_mc_after=119287 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.680097 event_ratio_json=0.754463 sample_pot=7.328791e+18 pot_eff=4.984290e+18 scale_factor=1.193680e+00 genweight_mc_sig_before=9.348000e+03 after=0.000000e+00
+WARNING: No data for CAF
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (247,077 --> 177,071)
+--scaling to POT (1.19e+00): 4.99e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=wiremodxtheta mode=cv chunk=0 n_mc_before=177071 n_mc_after=120621 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.681201 event_ratio_json=0.754463 sample_pot=7.328791e+18 pot_eff=4.992382e+18 scale_factor=1.191745e+00 genweight_mc_sig_before=9.564000e+03 after=0.000000e+00
+WARNING: No data for CAF
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (30,418 --> 21,644)
+--scaling to POT (1.14e+00): 5.22e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=wiremodxtheta mode=cv chunk=0 n_mc_before=21644 n_mc_after=15419 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.712391 event_ratio_json=0.754463 sample_pot=7.328791e+18 pot_eff=5.220968e+18 scale_factor=1.139568e+00 genweight_mc_sig_before=1.129000e+03 after=0.000000e+00
+WARNING: No data for CAF
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (188,563 --> 134,650)
+--scaling to POT (1.24e+00): 4.80e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=wiremodxtheta mode=variation chunk=0 n_mc_before=134650 n_mc_after=114541 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.850657 event_ratio_json=0.979359 sample_pot=5.641030e+18 pot_eff=4.798583e+18 scale_factor=1.239876e+00 genweight_mc_sig_before=7.214000e+03 after=1.239876e+00
+Applied cut on key: cut.flashpe (189,240 --> 135,084)
+--scaling to POT (1.25e+00): 4.76e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=wiremodxtheta mode=variation chunk=1 n_mc_before=135084 n_mc_after=114043 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.844238 event_ratio_json=0.979359 sample_pot=5.641030e+18 pot_eff=4.762370e+18 scale_factor=1.249304e+00 genweight_mc_sig_before=7.215000e+03 after=0.000000e+00
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (190,034 --> 135,705)
+--scaling to POT (1.25e+00): 4.74e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=wiremodxtheta mode=variation chunk=2 n_mc_before=135705 n_mc_after=114105 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.840831 event_ratio_json=0.979359 sample_pot=5.641030e+18 pot_eff=4.743154e+18 scale_factor=1.254365e+00 genweight_mc_sig_before=7.227000e+03 after=1.254365e+00
+Applied cut on key: cut.flashpe (23,075 --> 16,706)
+--scaling to POT (1.22e+00): 4.88e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=wiremodxtheta mode=variation chunk=3 n_mc_before=16706 n_mc_after=14462 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.865677 event_ratio_json=0.979359 sample_pot=5.641030e+18 pot_eff=4.883310e+18 scale_factor=1.218364e+00 genweight_mc_sig_before=8.690000e+02 after=0.000000e+00
+WARNING: No data for CAF
+[debug-pot] var=wiremodxtheta aggregate cv n_before=547569 n_after=372797 filter_frac=0.680822 n_aux_before=0 n_aux_after=639024 genweight_mc_sig=1.198737e+00
+[debug-pot] var=wiremodxtheta aggregate variation n_before=422145 n_after=357151 filter_frac=0.846039 n_aux_before=0 n_aux_after=639024 genweight_mc_sig=2.494241e+00
+[debug-pot] var=wiremodxtheta costheta_sel_sum=1.022453e+05
+[debug-pot] var=wiremodyz n_common=2310983 event_ratio_nominal=0.754214 event_ratio_var=0.979332 POT_NOMINAL=7.328791e+18 POT_DET=5.636172e+18 POT_DATA=5.949648e+18 json_POT_NOMINAL_FILTERED=1.102228779278138e+20 json_POT_DET_SCALED=1.0994532543156562e+20
+Applied cut on key: cut.flashpe (243,101 --> 173,457)
+--scaling to POT (1.20e+00): 4.96e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=wiremodyz mode=cv chunk=0 n_mc_before=173457 n_mc_after=117457 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.677153 event_ratio_json=0.754214 sample_pot=7.328791e+18 pot_eff=4.962716e+18 scale_factor=1.198869e+00 genweight_mc_sig_before=9.288000e+03 after=1.198869e+00
+Applied cut on key: cut.flashpe (244,630 --> 175,397)
+--scaling to POT (1.20e+00): 4.97e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=wiremodyz mode=cv chunk=0 n_mc_before=175397 n_mc_after=118998 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.678449 event_ratio_json=0.754214 sample_pot=7.328791e+18 pot_eff=4.972214e+18 scale_factor=1.196579e+00 genweight_mc_sig_before=9.348000e+03 after=0.000000e+00
+WARNING: No data for CAF
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (247,077 --> 177,071)
+--scaling to POT (1.19e+00): 4.99e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=wiremodyz mode=cv chunk=0 n_mc_before=177071 n_mc_after=120612 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.681150 event_ratio_json=0.754214 sample_pot=7.328791e+18 pot_eff=4.992009e+18 scale_factor=1.191834e+00 genweight_mc_sig_before=9.564000e+03 after=0.000000e+00
+WARNING: No data for CAF
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (30,418 --> 21,644)
+--scaling to POT (1.14e+00): 5.21e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=wiremodyz mode=cv chunk=0 n_mc_before=21644 n_mc_after=15398 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.711421 event_ratio_json=0.754214 sample_pot=7.328791e+18 pot_eff=5.213857e+18 scale_factor=1.141122e+00 genweight_mc_sig_before=1.129000e+03 after=0.000000e+00
+WARNING: No data for CAF
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (189,955 --> 135,271)
+--scaling to POT (1.25e+00): 4.75e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=wiremodyz mode=variation chunk=0 n_mc_before=135271 n_mc_after=114018 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.842886 event_ratio_json=0.979332 sample_pot=5.636172e+18 pot_eff=4.750649e+18 scale_factor=1.252386e+00 genweight_mc_sig_before=7.171000e+03 after=0.000000e+00
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (189,943 --> 135,829)
+--scaling to POT (1.26e+00): 4.73e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=wiremodyz mode=variation chunk=1 n_mc_before=135829 n_mc_after=113977 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.839121 event_ratio_json=0.979332 sample_pot=5.636172e+18 pot_eff=4.729431e+18 scale_factor=1.258005e+00 genweight_mc_sig_before=7.190000e+03 after=1.258005e+00
+Applied cut on key: cut.flashpe (189,262 --> 134,681)
+--scaling to POT (1.26e+00): 4.74e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=wiremodyz mode=variation chunk=2 n_mc_before=134681 n_mc_after=113244 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.840831 event_ratio_json=0.979332 sample_pot=5.636172e+18 pot_eff=4.739069e+18 scale_factor=1.255446e+00 genweight_mc_sig_before=7.206000e+03 after=0.000000e+00
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (23,705 --> 16,722)
+--scaling to POT (1.22e+00): 4.89e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+[debug-pot] var=wiremodyz mode=variation chunk=3 n_mc_before=16722 n_mc_after=14510 n_aux_on_input=0 n_aux_after_combine=159756 filter_frac=0.867719 event_ratio_json=0.979332 sample_pot=5.636172e+18 pot_eff=4.890614e+18 scale_factor=1.216544e+00 genweight_mc_sig_before=8.820000e+02 after=0.000000e+00
+WARNING: No data for CAF
+[debug-pot] var=wiremodyz aggregate cv n_before=547569 n_after=372465 filter_frac=0.680216 n_aux_before=0 n_aux_after=639024 genweight_mc_sig=1.198869e+00
+[debug-pot] var=wiremodyz aggregate variation n_before=422503 n_after=355749 filter_frac=0.842003 n_aux_before=0 n_aux_after=639024 genweight_mc_sig=1.258005e+00
+[debug-pot] var=wiremodyz costheta_sel_sum=1.021733e+05
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saved costheta universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saved momentum universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saved differential universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saved bcfm universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saved flashpe universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saved startx universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saved starty universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saved startz universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saved endx universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saved endy universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saved endz universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saved phi universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saved theta universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saved length universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saved vtxx universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saved vtyy universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saving 38 array fields for 11 keys to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Saved vtzx universes to /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/data/checkpoint7_test8/syst/flashpe
+Processing cut flashmatch with chain ['precut', 'flashpe', 'flashmatch']
+Applied cut on key: cut.flashpe (1,093,315 --> 650,306)
+Applied cut on key: cut.flashmatch (650,306 --> 86,994)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+Applied cut on key: cut.flashmatch (59,351 --> 8,979)
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashmatch (100,405 --> 13,275)
+--scaling to livetime (1.10e+00): 8.62e+05 --> 9.51e+05
+Applied cut on key: cut.flashpe (50,943 --> 30,295)
+Applied cut on key: cut.flashmatch (30,295 --> 4,161)
+--scaling to livetime (1.10e+00): 8.62e+05 --> 9.51e+05
+Applied cut on key: cut.flashpe (51,450 --> 31,167)
+Applied cut on key: cut.flashmatch (31,167 --> 4,216)
+--scaling to livetime (1.10e+00): 8.62e+05 --> 9.51e+05
+Applied cut on key: cut.flashpe (51,501 --> 30,700)
+Applied cut on key: cut.flashmatch (30,700 --> 4,196)
+--scaling to livetime (1.10e+00): 8.62e+05 --> 9.51e+05
+Applied cut on key: cut.flashpe (6,657 --> 3,970)
+Applied cut on key: cut.flashmatch (3,970 --> 547)
+--scaling to POT (4.35e+00): 1.37e+18 -> 5.95e+18
+Applied cut on key: cut.flashpe (162,589 --> 124,239)
+Applied cut on key: cut.flashmatch (124,239 --> 36,606)
+[debug-pot] var=pmtgain n_common=2138066 event_ratio_nominal=0.697781 event_ratio_var=0.970372 POT_NOMINAL=7.328791e+18 POT_DET=5.453557e+18 POT_DATA=5.949648e+18 json_POT_NOMINAL_FILTERED=1.0197556092779962e+20 json_POT_DET_SCALED=1.0310607372694356e+20
+Applied cut on key: cut.flashpe (243,101 --> 173,457)
+Applied cut on key: cut.flashmatch (173,457 --> 24,291)
+--scaling to POT (6.29e+00): 9.46e+17 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashmatch (100,405 --> 13,275)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+Applied cut on key: cut.flashmatch (59,351 --> 8,979)
+[debug-pot] var=pmtgain mode=cv chunk=0 n_mc_before=24291 n_mc_after=3134 n_aux_on_input=0 n_aux_after_combine=22254 filter_frac=0.129019 event_ratio_json=0.697781 sample_pot=7.328791e+18 pot_eff=9.455531e+17 scale_factor=6.292241e+00 genweight_mc_sig_before=8.403000e+03 after=6.292241e+00
+Applied cut on key: cut.flashpe (244,630 --> 175,397)
+Applied cut on key: cut.flashmatch (175,397 --> 24,474)
+--scaling to POT (6.35e+00): 9.37e+17 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashmatch (100,405 --> 13,275)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+Applied cut on key: cut.flashmatch (59,351 --> 8,979)
+[debug-pot] var=pmtgain mode=cv chunk=0 n_mc_before=24474 n_mc_after=3130 n_aux_on_input=0 n_aux_after_combine=22254 filter_frac=0.127891 event_ratio_json=0.697781 sample_pot=7.328791e+18 pot_eff=9.372851e+17 scale_factor=6.347746e+00 genweight_mc_sig_before=8.478000e+03 after=6.347746e+00
+Applied cut on key: cut.flashpe (247,077 --> 177,071)
+Applied cut on key: cut.flashmatch (177,071 --> 24,710)
+--scaling to POT (6.24e+00): 9.54e+17 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashmatch (100,405 --> 13,275)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+Applied cut on key: cut.flashmatch (59,351 --> 8,979)
+[debug-pot] var=pmtgain mode=cv chunk=0 n_mc_before=24710 n_mc_after=3215 n_aux_on_input=0 n_aux_after_combine=22254 filter_frac=0.130109 event_ratio_json=0.697781 sample_pot=7.328791e+18 pot_eff=9.535436e+17 scale_factor=6.239513e+00 genweight_mc_sig_before=8.615000e+03 after=6.239513e+00
+Applied cut on key: cut.flashpe (30,418 --> 21,644)
+Applied cut on key: cut.flashmatch (21,644 --> 3,022)
+--scaling to POT (6.49e+00): 9.17e+17 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashmatch (100,405 --> 13,275)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+Applied cut on key: cut.flashmatch (59,351 --> 8,979)
+[debug-pot] var=pmtgain mode=cv chunk=0 n_mc_before=3022 n_mc_after=378 n_aux_on_input=0 n_aux_after_combine=22254 filter_frac=0.125083 event_ratio_json=0.697781 sample_pot=7.328791e+18 pot_eff=9.167051e+17 scale_factor=6.490252e+00 genweight_mc_sig_before=1.021000e+03 after=0.000000e+00
+WARNING: No data for CAF
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (178,629 --> 127,545)
+Applied cut on key: cut.flashmatch (127,545 --> 17,847)
+--scaling to POT (6.12e+00): 9.71e+17 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashmatch (100,405 --> 13,275)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+Applied cut on key: cut.flashmatch (59,351 --> 8,979)
+[debug-pot] var=pmtgain mode=variation chunk=0 n_mc_before=17847 n_mc_after=3179 n_aux_on_input=0 n_aux_after_combine=22254 filter_frac=0.178125 event_ratio_json=0.970372 sample_pot=5.453557e+18 pot_eff=9.714158e+17 scale_factor=6.124718e+00 genweight_mc_sig_before=6.194000e+03 after=0.000000e+00
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (180,444 --> 129,276)
+Applied cut on key: cut.flashmatch (129,276 --> 18,014)
+--scaling to POT (6.43e+00): 9.25e+17 -> 5.95e+18
+Applied cut on key: cut.flashpe (159,570 --> 100,405)
+Applied cut on key: cut.flashmatch (100,405 --> 13,275)
+Applied cut on key: cut.flashpe (235,518 --> 59,351)
+Applied cut on key: cut.flashmatch (59,351 --> 8,979)
+[debug-pot] var=pmtgain mode=variation chunk=1 n_mc_before=18014 n_mc_after=3057 n_aux_on_input=0 n_aux_after_combine=22254 filter_frac=0.169701 event_ratio_json=0.970372 sample_pot=5.453557e+18 pot_eff=9.254760e+17 scale_factor=6.428744e+00 genweight_mc_sig_before=6.268000e+03 after=0.000000e+00
+WARNING: No data for CAF
+Applied cut on key: cut.flashpe (179,618 --> 128,330)
+Applied cut on key: cut.flashmatch (128,330 --> 18,052)
+--scaling to POT (6.21e+00): 9.58e+17 -> 5.95e+18

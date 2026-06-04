@@ -1,0 +1,5 @@
+envs/
+node_modules/
+.git/
+build/
+dist/

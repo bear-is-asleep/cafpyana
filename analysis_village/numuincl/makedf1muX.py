@@ -18,6 +18,7 @@ from sbnd.cafclasses.slice import CAFSlice
 from sbnd.cafclasses.nu import NU
 from sbnd.cafclasses.binning import Binning2D
 from sbnd.numu.numu_constants import *
+from sbnd.detector.definitions import *
 
 DEFAULT_INCLUDE_WEIGHTS = False
 DEFAULT_SLIM = False
@@ -26,7 +27,6 @@ DEFAULT_FULL_CUTS = False
 DEFAULT_PRELIM_CUTS = False
 DEFAULT_TRK_CUTS = True
 DEFAULT_VERBOSE = False
-DEFAULT_ADD_STAT_UNC = False
 
 def _resolve_flag(value, fallback):
     return fallback if value is None else value
@@ -58,7 +58,6 @@ FULL_CUTS = DEFAULT_FULL_CUTS
 PRELIM_CUTS = DEFAULT_PRELIM_CUTS
 TRK_CUTS = DEFAULT_TRK_CUTS
 VERBOSE = DEFAULT_VERBOSE
-ADD_STAT_UNC = DEFAULT_ADD_STAT_UNC
 _set_update_recomb(DEFAULT_UPDATE_RECOMB)
 apply_setting_dependencies()
 
@@ -134,21 +133,6 @@ def make_spine_evtdf_wgt(f,include_weights=None, wgt_types=["bnb","genie"],preli
             return c
 
     interdf.columns = pd.MultiIndex.from_tuples([fixpos(c) for c in interdf.columns])
-    #Add containment
-    #interdf[("mu", "is_contained", "", "")] = (InFV(interdf.mu.start_point, 0, det=DETECTOR+" AV")) & (InFV(interdf.mu.end_point, 0, det=DETECTOR+" AV"))
-    #interdf[("mu", "truth", "is_contained", "")] = (InFV(interdf.mu.truth.start_point, 0, det=DETECTOR+" AV")) & (InFV(interdf.mu.truth.end_point, 0, det=DETECTOR+" AV"))
-
-    # mcdf.columns = pd.MultiIndex.from_tuples([tuple(list(c) +["", "", "", "", ""]) for c in mcdf.columns])     # match # of column levels
-
-    # df = multicol_merge(interdf.reset_index(), 
-    #               mcdf.reset_index(),
-    #               left_on=[("entry", "", "",), 
-    #                        ("slc", "tmatch", "idx")], 
-    #               right_on=[("entry", "", ""), 
-    #                         ("rec.mc.nu..index", "", "")], 
-    #               how="left"
-    #               )
-    #interdf = interdf.set_index(interdf.index.names, verify_integrity=True)
     
     return interdf
 
@@ -184,7 +168,9 @@ def make_pandora_evtdf(f, include_weights=None, wgt_types=["bnb","genie","g4"], 
     ismc = hdr.ismc.astype(bool).unique()
     if len(ismc) > 1:
         raise ValueError(f'Multiple ismc values: {ismc}')
-    elif len(ismc) == 0:
+    elif len(ismc) == 0: # Usually means empty dataframe
+        #ismc = False
+        #print('WARNING: No ismc values found, setting ismc to False')
         raise ValueError(f'No ismc values found')
     else:
         ismc = ismc[0]
@@ -205,9 +191,6 @@ def make_pandora_evtdf(f, include_weights=None, wgt_types=["bnb","genie","g4"], 
 
     # ---- calculate additional info ----
     
-    # track containment in active volume
-    trkdf[("pfp", "trk", "is_contained", "", "", "")] = (InFV(trkdf.pfp.trk.start, 0, det=DETECTOR+" AV")) & (InFV(trkdf.pfp.trk.end, 0, det=DETECTOR+" AV"))
-
     # reco momentum -- range for contained, MCS for exiting
     trkdf[("pfp", "trk", "P", "p_muon", "", "")] = np.nan
     trkdf.loc[trkdf.pfp.trk.is_contained, ("pfp", "trk", "P", "p_muon", "", "")]  = trkdf.loc[(trkdf.pfp.trk.is_contained), ("pfp", "trk", "rangeP", "p_muon", "", "")]
@@ -367,13 +350,13 @@ def _process_mcnu(mcdf, slc, ismc):
         mcnu.cut_fv(cut=False)
         mcnu.cut_cosmic(cut=False)
         mcnu.cut_cont(cut=False)
-        mcnu.add_event_type('pandora',)
+        mcnu.add_event_type('pandora')
         
         return mcnu
     return None
 
 def make_pandora_evtdf_processed(f, include_weights=None, wgt_types=["bnb","genie","g4"], slim=None, 
-                       trkScoreCut=None, updaterecomb=None, add_stat_unc=None, **trkArgs):
+                       trkScoreCut=None, updaterecomb=None, **trkArgs):
     """
     Utilize my CAF class to add the necessary columns to the dataframe
     """
@@ -381,14 +364,15 @@ def make_pandora_evtdf_processed(f, include_weights=None, wgt_types=["bnb","geni
     slim = _resolve_flag(slim, SLIM)
     updaterecomb = _resolve_flag(updaterecomb, UPDATE_RECOMB)
     trkScoreCut = _resolve_flag(trkScoreCut, TRK_CUTS)
-    add_stat_unc = _resolve_flag(add_stat_unc, ADD_STAT_UNC)
     df, mcdf = make_pandora_evtdf(f, include_weights=include_weights,  wgt_types=wgt_types, slim=slim, 
                             trkScoreCut=trkScoreCut, updaterecomb=updaterecomb, return_mcdf=True, **trkArgs)
     hdr = make_hdrdf(f)
     ismc = hdr.ismc.astype(bool).unique()
     if len(ismc) > 1:
         raise ValueError(f'Multiple ismc values: {ismc}')
-    elif len(ismc) == 0:
+    elif len(ismc) == 0: # Usually means empty dataframe
+        #ismc = False
+        #print('WARNING: No ismc values found, setting ismc to False')
         raise ValueError(f'No ismc values found')
     else:
         ismc = ismc[0]
@@ -415,12 +399,15 @@ def make_pandora_evtdf_processed(f, include_weights=None, wgt_types=["bnb","geni
             slc.add_has_muon(suffix=key_suffix)
         else:
             slc.add_has_muon()
+    slc.add_is_tpc_contained(ismc=ismc)
+    slc.add_phi(ismc=ismc)
+    slc.add_theta(ismc=ismc)
     slc.add_in_av()
     slc.add_in_fv()
     slc.add_event_type()
-    slc.add_track_flipping()
 
     if ismc:
+        slc.add_track_flipping(algo='pandora')
         # Fix the costheta and momentum for slices that don't have a true muon
         mask = (slc.data.truth.mu.dir.z == -1) | (np.isnan(slc.data.truth.mu.dir.z))
         dir_col = slc.get_key([f'mu.pfp.trk.truth.p.dir.z'])[0]
@@ -433,13 +420,73 @@ def make_pandora_evtdf_processed(f, include_weights=None, wgt_types=["bnb","geni
         truth_totp_col = slc.get_key([f'truth.mu.totp'])[0]
         if mask.sum() > 0:
             slc.data.loc[mask,truth_totp_col] = slc.data.loc[mask,totp_col]
+
+        # Start and end (not binning, just updating)
+        start_x_col = slc.get_key([f'mu.pfp.trk.truth.p.start.x'])[0]
+        truth_start_x_col = slc.get_key([f'truth.mu.start.x'])[0]
+        mask = np.isnan(slc.data.loc[:,truth_start_x_col])
+        if mask.sum() > 0:
+            slc.data.loc[mask,truth_start_x_col] = slc.data.loc[mask,start_x_col]
+        
+        start_y_col = slc.get_key([f'mu.pfp.trk.truth.p.start.y'])[0]
+        truth_start_y_col = slc.get_key([f'truth.mu.start.y'])[0]
+        mask = np.isnan(slc.data.loc[:,truth_start_y_col])
+        if mask.sum() > 0:
+            slc.data.loc[mask,truth_start_y_col] = slc.data.loc[mask,start_y_col]
+
+        start_z_col = slc.get_key([f'mu.pfp.trk.truth.p.start.z'])[0]
+        truth_start_z_col = slc.get_key([f'truth.mu.start.z'])[0]
+        mask = np.isnan(slc.data.loc[:,truth_start_z_col])
+        if mask.sum() > 0:
+            slc.data.loc[mask,truth_start_z_col] = slc.data.loc[mask,start_z_col]
+
+        end_x_col = slc.get_key([f'mu.pfp.trk.truth.p.end.x'])[0]
+        truth_end_x_col = slc.get_key([f'truth.mu.end.x'])[0]
+        mask = np.isnan(slc.data.loc[:,truth_end_x_col])
+        if mask.sum() > 0:
+            slc.data.loc[mask,truth_end_x_col] = slc.data.loc[mask,end_x_col]
+
+        end_y_col = slc.get_key([f'mu.pfp.trk.truth.p.end.y'])[0]
+        truth_end_y_col = slc.get_key([f'truth.mu.end.y'])[0]
+        mask = np.isnan(slc.data.loc[:,truth_end_y_col])
+        if mask.sum() > 0:
+            slc.data.loc[mask,truth_end_y_col] = slc.data.loc[mask,end_y_col]
+        
+        end_z_col = slc.get_key([f'mu.pfp.trk.truth.p.end.z'])[0]
+        truth_end_z_col = slc.get_key([f'truth.mu.end.z'])[0]
+        mask = np.isnan(slc.data.loc[:,truth_end_z_col])
+        if mask.sum() > 0:
+            slc.data.loc[mask,truth_end_z_col] = slc.data.loc[mask,end_z_col]
+        
+        # Length
+        length_col = slc.get_key([f'mu.pfp.trk.truth.p.length'])[0]
+        truth_length_col = slc.get_key([f'truth.mu.length'])[0]
+        mask = np.isnan(slc.data.loc[:,truth_length_col])
+        if mask.sum() > 0:
+            slc.data.loc[mask,truth_length_col] = slc.data.loc[mask,length_col]
+
+        # Phi
+        phi_col = slc.get_key([f'mu.pfp.trk.phi'])[0]
+        truth_phi_col = slc.get_key([f'truth.mu.phi'])[0]
+        mask = np.isnan(slc.data.loc[:,truth_phi_col])
+        if mask.sum() > 0:
+            slc.data.loc[mask,truth_phi_col] = slc.data.loc[mask,phi_col]
+        
+        # Theta
+        theta_col = slc.get_key([f'mu.pfp.trk.theta'])[0]
+        truth_theta_col = slc.get_key([f'truth.mu.theta'])[0]
+        mask = np.isnan(slc.data.loc[:,truth_theta_col])
+        if mask.sum() > 0:
+            slc.data.loc[mask,truth_theta_col] = slc.data.loc[mask,theta_col]
     #print(f'len of data: {len(slc.data)}')
     slc.add_2d_binning(include_truth=ismc, include_reco=True)
 
 
     #Opt0 cuts
     #slc.cut_flashmatch(cut=False)
-    #slc.cut_cosmic(cut=False,fmatch_score=320,nu_score=0.5,use_opt0=True,use_isclearcosmic=False)
+    #slc.cut_cosmic_fmatch(cut=False,fmatch_score=320,use_opt0=True)
+    #slc.cut_cosmic_nuscore(cut=False,nu_score=0.5)
+    #slc.cut_cosmic_isclear(cut=False,use_isclearcosmic=False)
     #Barycenter FM cuts
     #Prescale flash PE
     if ismc:
@@ -447,29 +494,26 @@ def make_pandora_evtdf_processed(f, include_weights=None, wgt_types=["bnb","geni
         slc.data.loc[:,pe_col] = slc.data.loc[:,pe_col]*0.66 #prescale to match the data
     #Add cuts
     slc.cut_flashpe(cut=False,min_flashpe=2000,prescale=1.)
-    slc.cut_cosmic(cut=False,fmatch_score=0.06,use_opt0='barycenterFM',nu_score=None,use_isclearcosmic=False)
-    slc.cut_flashmatch(cut=False,method='barycenterFM',use_isclearcosmic=False)
+    slc.cut_cosmic(cut=False,fmatch_score=0.06,use_opt0='barycenterFM')
+    slc.cut_flashmatch(cut=False,method='barycenterFM')
     slc.cut_fv(cut=False)
     slc.cut_muon(cut=False,min_ke=0.1)
     slc.cut_lowz(cut=False,z_max=6,include_start=True)
-    slc.cut_is_cont(cut=False) #Don't apply containment cut
+    slc.cut_is_cont(cut=False)
     slc.cut_all(cut=False) #Add the all cut column
-
-    if add_stat_unc:
-        slc.add_stat_unc()
     
 
     if VERBOSE:
-        from naming import PAND_CUTS
+        from naming import PAND_CUTS_CONT
         if mcnu is not None:
-            pur,eff,f1,_,_,_ = slc.get_pur_eff_f1(mcnu,PAND_CUTS,categories=[0,1])
+            pur,eff,f1,_,_,_ = slc.get_pur_eff_f1(mcnu,PAND_CUTS_CONT,categories=[0])
             print('Pandora cuts:')
-            print(PAND_CUTS)
+            print(PAND_CUTS_CONT)
             print('Pandora pur, eff, f1:')
             print(pur,eff,f1)
-    with open('/exp/sbnd/app/users/brindenc/develop/cafpyana/analysis_village/numuincl/slc_keys_inmaker.txt','w') as f:
-        for k in slc.data.keys():
-            f.write(f'{k}\n')
+    # with open('/exp/sbnd/app/users/brindenc/develop/cafpyana/analysis_village/numuincl/slc_keys_inmaker.txt','w') as f:
+    #     for k in slc.data.keys():
+    #         f.write(f'{k}\n')
     return slc.data
     
 def make_pandora_evtdf_processed_signal_cut(f, include_weights=None, wgt_types=["bnb","genie","g4"], slim=None, 
@@ -490,15 +534,14 @@ def make_pandora_evtdf_processed_signal_cut(f, include_weights=None, wgt_types=[
         print(f'updaterecomb: {updaterecomb}')
     slc = CAFSlice(df)
     slc.remove_column_suffix(MU_KEY_SUFFIXES[-1]) #Fix null variation
-    is_signal = np.isin(slc.data.truth.event_type,[0,1])
-    slc.data = slc.data[is_signal]
 
     #Apply the cut all for both the reco and truth dataframes (only cut if requested)
-    slc.cut_all(cut=True,mode='truth',cont=False)
+    # Keep the uncontained as well for the xsec signal definition
+    slc.cut_all(cut=True,mode='truth',cont=False) 
 
-    with open('/exp/sbnd/app/users/brindenc/develop/cafpyana/analysis_village/numuincl/slc_signal_keys_inmaker.txt','w') as f:
-        for k in slc.data.keys():
-            f.write(f'{k}\n')
+    # with open('/exp/sbnd/app/users/brindenc/develop/cafpyana/analysis_village/numuincl/slc_signal_keys_inmaker.txt','w') as f:
+    #     for k in slc.data.keys():
+    #         f.write(f'{k}\n')
 
     return slc.data #return just the df
 
@@ -520,8 +563,8 @@ def make_pandora_evtdf_processed_selected_cut(f, include_weights=None, wgt_types
         print(f'updaterecomb: {updaterecomb}')
     slc = CAFSlice(df)
     slc.remove_column_suffix(MU_KEY_SUFFIXES[-1]) #Fix null variation
-    slc.cut_all(cut=True,mode='reco',cont=False)
-    with open('/exp/sbnd/app/users/brindenc/develop/cafpyana/analysis_village/numuincl/slc_selected_keys_inmaker.txt','w') as f:
-        for k in slc.data.keys():
-            f.write(f'{k}\n')
+    slc.cut_all(cut=True,mode='reco',cont=True)
+    # with open('/exp/sbnd/app/users/brindenc/develop/cafpyana/analysis_village/numuincl/slc_selected_keys_inmaker.txt','w') as f:
+    #     for k in slc.data.keys():
+    #         f.write(f'{k}\n')
     return slc.data #return just the df

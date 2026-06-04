@@ -1,131 +1,127 @@
-input_dir: /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/mc_syst/v7
-#output_dir: /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/mc_syst/v7
-output_dir: /pnfs/sbnd/persistent/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/mc_syst/v7
+input_dir: /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/mc_syst/v8
+#output_dir: /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/mc_syst/v8
+output_dir: /pnfs/sbnd/scratch/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/mc_syst/v8
 
 jobs:
-  - name: fullsyst_fullcuts_norecomb
+  - name: nosyst_nocuts_recomb
     enabled: true
-    description: INCLUDE_WEIGHTS=True, SLIM=False, UPDATE_RECOMB=False, FULL_CUTS=True, ADD_STAT_UNC=True
+    description: INCLUDE_WEIGHTS=False, SLIM=False, UPDATE_RECOMB=True, ADD_STAT_UNC=False
     base_config: analysis_village.numuincl.configs.base
     dfs:
       - makedf.makedf.make_hdrdf
       - makedf.makedf.make_mcnudf
-      - analysis_village.numuincl.makedf1muX.make_pandora_evtdf_processed_signal_cut
-      - analysis_village.numuincl.makedf1muX.make_pandora_evtdf_processed_selected_cut
-    names: [hdr, mcnu, evt_pand_signal, evt_pand_selected]
+      - analysis_village.numuincl.makedf1muX.make_pandora_evtdf_processed
+      - analysis_village.numuincl.makedf1muX.make_custom_trkdf
+    names: [hdr, 
+      mcnu, evt_pand, 
+      trk]
     input_list: mc_fullpand.list
-    output: mc_fullpand_fullsyst_cut_norecomb
+    output: mcbnb_tinypand_nosyst_nocuts_recomb2
     settings:
-      INCLUDE_WEIGHTS: true
+      INCLUDE_WEIGHTS: false
       SLIM: false
-      UPDATE_RECOMB: false
+      UPDATE_RECOMB: true
       VERBOSE: false
       ADD_STAT_UNC: false
     args:
-      ngrid: 0
-      ncpu: 40
-      #nfile: 1
-      nfile: -1
-      keeplocal: true
-
-  # - name: slimsyst_nocuts_norecomb
+      ngrid: 1
+      ncpu: -1
+      nfile: 1
+      keeplocal: false
+  # - name: fullsyst_fullcuts_norecomb
   #   enabled: true
-  #   description: INCLUDE_WEIGHTS=True, SLIM=True, UPDATE_RECOMB=False, ADD_STAT_UNC=True
+  #   description: INCLUDE_WEIGHTS=True, SLIM=False, UPDATE_RECOMB=False, FULL_CUTS=True, ADD_STAT_UNC=True
   #   base_config: analysis_village.numuincl.configs.base
   #   dfs:
   #     - makedf.makedf.make_hdrdf
   #     - makedf.makedf.make_mcnudf
-  #     - analysis_village.numuincl.makedf1muX.make_pandora_evtdf_processed
-  #   names: [hdr, mcnu, evt_pand]
+  #     - analysis_village.numuincl.makedf1muX.make_pandora_evtdf_processed_signal_cut
+  #     - analysis_village.numuincl.makedf1muX.make_pandora_evtdf_processed_selected_cut
+  #   names: [hdr, mcnu, evt_pand_signal, evt_pand_selected]
   #   input_list: mc_fullpand.list
-  #   output: mc_smallpand_slimsyst_nocuts_norecomb
+  #   output: mc_largepand_fullsyst_cut_norecomb
   #   settings:
   #     INCLUDE_WEIGHTS: true
-  #     SLIM: true
-  #     UPDATE_RECOMB: false
-  #     VERBOSE: false
-  #     ADD_STAT_UNC: true
-  #   args:
-  #     ngrid: 0
-  #     ncpu: -1
-  #     #nfile: 1
-  #     nfile: 500
-  #     keeplocal: true
-
-  # - name: slimsyst_nocuts_norecomb
-  #   enabled: true
-  #   description: INCLUDE_WEIGHTS=True, SLIM=True, UPDATE_RECOMB=False, ADD_STAT_UNC=True
-  #   base_config: analysis_village.numuincl.configs.base
-  #   dfs:
-  #     - makedf.makedf.make_hdrdf
-  #     - makedf.makedf.make_mcnudf
-  #     - analysis_village.numuincl.makedf1muX.make_pandora_evtdf_processed
-  #   names: [hdr, mcnu, evt_pand]
-  #   input_list: mc_fullpand.list
-  #   output: mc_medpand_slimsyst_nocuts_norecomb
-  #   settings:
-  #     INCLUDE_WEIGHTS: true
-  #     SLIM: true
-  #     UPDATE_RECOMB: false
-  #     VERBOSE: false
-  #     ADD_STAT_UNC: true
-  #   args:
-  #     ngrid: 0
-  #     ncpu: -1
-  #     #nfile: 1
-  #     nfile: 2500
-  #     keeplocal: true
-
-  # - name: nosyst_nocuts_recomb
-  #   enabled: true
-  #   description: INCLUDE_WEIGHTS=False, SLIM=False, UPDATE_RECOMB=True, ADD_STAT_UNC=False
-  #   base_config: analysis_village.numuincl.configs.base
-  #   dfs:
-  #     - makedf.makedf.make_hdrdf
-  #     - makedf.makedf.make_mcnudf
-  #     - analysis_village.numuincl.makedf1muX.make_pandora_evtdf_processed
-  #     - analysis_village.numuincl.makedf1muX.make_custom_trkdf
-  #   names: [hdr, 
-  #     mcnu, evt_pand, 
-  #     trk]
-  #   input_list: mc_fullpand.list
-  #   output: mc_fullpand_nosyst_nocuts_recomb
-  #   settings:
-  #     INCLUDE_WEIGHTS: false
   #     SLIM: false
-  #     UPDATE_RECOMB: true
+  #     UPDATE_RECOMB: false
   #     VERBOSE: false
   #     ADD_STAT_UNC: false
   #   args:
-  #     ngrid: 0
-  #     ncpu: 40
-  #     #nfile: 1
+  #     ngrid: 100
+  #     ncpu: -1
   #     nfile: -1
   #     keeplocal: true
 
-  # - name: nosyst_nocuts_recomb
+  # - name: slimsyst_nocuts_norecomb
   #   enabled: true
-  #   description: INCLUDE_WEIGHTS=False, SLIM=False, UPDATE_RECOMB=True, ADD_STAT_UNC=False
+  #   description: INCLUDE_WEIGHTS=True, SLIM=True, UPDATE_RECOMB=False, ADD_STAT_UNC=True
   #   base_config: analysis_village.numuincl.configs.base
   #   dfs:
   #     - makedf.makedf.make_hdrdf
   #     - makedf.makedf.make_mcnudf
   #     - analysis_village.numuincl.makedf1muX.make_pandora_evtdf_processed
-  #     - analysis_village.numuincl.makedf1muX.make_custom_trkdf
-  #   names: [hdr, 
-  #     mcnu, evt_pand, 
-  #     trk]
+  #   names: [hdr, mcnu, evt_pand]
   #   input_list: mc_fullpand.list
-  #   output: mc_medpand_nosyst_nocuts_recomb
+  #   output: mc_largepand_slimsyst_nocuts_norecomb
   #   settings:
-  #     INCLUDE_WEIGHTS: false
-  #     SLIM: false
-  #     UPDATE_RECOMB: true
+  #     INCLUDE_WEIGHTS: true
+  #     SLIM: true
+  #     UPDATE_RECOMB: false
   #     VERBOSE: false
-  #     ADD_STAT_UNC: false
+  #     ADD_STAT_UNC: true
   #   args:
-  #     ngrid: 0
+  #     ngrid: 100
   #     ncpu: -1
-  #     #nfile: 1
-  #     nfile: 2500
-  #     keeplocal: true
+  #     nfile: -1
+      #keeplocal: true
+
+  # # # # - name: slimsyst_nocuts_norecomb
+  # # # #   enabled: true
+  # # # #   description: INCLUDE_WEIGHTS=True, SLIM=True, UPDATE_RECOMB=False, ADD_STAT_UNC=True
+  # # # #   base_config: analysis_village.numuincl.configs.base
+  # # # #   dfs:
+  # # # #     - makedf.makedf.make_hdrdf
+  # # # #     - makedf.makedf.make_mcnudf
+  # # # #     - analysis_village.numuincl.makedf1muX.make_pandora_evtdf_processed
+  # # # #   names: [hdr, mcnu, evt_pand]
+  # # # #   input_list: mc_fullpand.list
+  # # # #   output: mc_medpand_slimsyst_nocuts_norecomb
+  # # # #   settings:
+  # # # #     INCLUDE_WEIGHTS: true
+  # # # #     SLIM: true
+  # # # #     UPDATE_RECOMB: false
+  # # # #     VERBOSE: false
+  # # # #     ADD_STAT_UNC: true
+  # # # #   args:
+  # # # #     ngrid: 0
+  # # # #     ncpu: -1
+  # # # #     #nfile: 1
+  # # # #     nfile: 2500
+  # # # #     keeplocal: true
+
+  # # # # - name: nosyst_nocuts_recomb
+  # # # #   enabled: true
+  # # # #   description: INCLUDE_WEIGHTS=False, SLIM=False, UPDATE_RECOMB=True, ADD_STAT_UNC=False
+  # # # #   base_config: analysis_village.numuincl.configs.base
+  # # # #   dfs:
+  # # # #     - makedf.makedf.make_hdrdf
+  # # # #     - makedf.makedf.make_mcnudf
+  # # # #     - analysis_village.numuincl.makedf1muX.make_pandora_evtdf_processed
+  # # # #     - analysis_village.numuincl.makedf1muX.make_custom_trkdf
+  # # # #   names: [hdr, 
+  # # # #     mcnu, evt_pand, 
+  # # # #     trk]
+  # # # #   input_list: mc_fullpand.list
+  # # # #   output: mc_fullpand_nosyst_nocuts_recomb
+  # # # #   settings:
+  # # # #     INCLUDE_WEIGHTS: false
+  # # # #     SLIM: false
+  # # # #     UPDATE_RECOMB: true
+  # # # #     VERBOSE: false
+  # # # #     ADD_STAT_UNC: false
+  # # # #   args:
+  # # # #     ngrid: 0
+  # # # #     ncpu: 40
+  # # # #     #nfile: 1
+  # # # #     nfile: -1
+  # # # #     keeplocal: true

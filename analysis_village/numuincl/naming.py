@@ -19,20 +19,36 @@ SPINE_QUALIFIER = f'SPINE '
 SPINE_QUALIFIER_PRELIM_LABEL = SPINE_QUALIFIER + PRELIM_LABEL
 SPINE_QUALIFIER_INTERNAL_LABEL = SPINE_QUALIFIER + INTERNAL_LABEL
 SPINE_QUALIFIER_INTERNAL_LABEL = SPINE_QUALIFIER + INTERNAL_LABEL
-# Cut lists
-PAND_CUTS = ['flashpe','flashmatch','fv','muon','cosmic','lowz']
-PAND_CUT_LABELS = ['Flash PE > 2000','Flash Match\n(best BCFM)','Fiducial','Has Muon','Flash Score\n(score cut)','Low Z']
+# Cut lists (canonical order for detsys / contained analyses)
+PAND_CUTS_BASE = ['flashpe', 'flashmatch', 'cosmic', 'fv', 'muon']
+PAND_CUT_LABELS_BASE = [
+    'Flash PE > 2000',
+    'Flash Match\n(best BCFM)',
+    'Flash Score\n(score cut)',
+    'Fiducial',
+    'Has Muon',
+]
 
-PAND_CUTS_CONT = ['flashpe','flashmatch','fv','muon','cosmic','cont']
-PAND_CUT_LABELS_CONT = ['Flash PE > 2000','Flash Match (by TPC)','Fiducial','Has Muon','Flash Score','Muon Contained']
+PAND_CUTS = PAND_CUTS_BASE + ['lowz']
+PAND_CUT_LABELS = PAND_CUT_LABELS_BASE + ['Low Z']
 
-SPINE_CUTS = ['time_contained','cosmic','fv','muon','cosmic_score','lowz','start_dedx']
-SPINE_CUT_LABELS = ['Time Contained','Flash Match\n(best match, whole detector)','Fiducial','Has Muon','Flash Score','Low Z','Start dE/dx']
-
-SPINE_CUTS_CONT = ['time_contained','cosmic','fv','muon','cont']
-SPINE_CUT_LABELS_CONT = ['Time Contained','Flash Match\n(best match, whole detector)','Fiducial','Has Muon','Muon Contained']
-
-SPINE_CUTS_CONT_NOFM = ['time_contained','fv','muon','cont']
-SPINE_CUT_LABELS_CONT_NOFM = ['Time Contained','Fiducial','Has Muon','Contained']
+PAND_CUTS_CONT = PAND_CUTS_BASE + ['cont_full', 'cont']
+PAND_CUT_LABELS_CONT = PAND_CUT_LABELS_BASE + [
+    'Muon Contained\n(full detector)',
+    'Muon Contained\n(by TPC)',
+]
 
 GENIE_LABEL = 'GENIE v3.4.0 AR23_20i_00_000'
+
+#Key structure
+MCNU_KEY = 'mcnu*'
+PAND_KEY = 'evt_pand*'
+PAND_SELECTED_KEY = 'evt_pand_selected*'
+PAND_SIGNAL_KEY = 'evt_pand_signal*'
+HDR_KEY = 'hdr*'
+POT_KEY = 'histpotdf*'
+GENEVT_KEY = 'histgenevtdf*'
+PFP_KEY = 'trk*'
+
+#Data location
+DATA_DIR = '/exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora'

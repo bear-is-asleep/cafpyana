@@ -78,6 +78,6 @@ if [ -f "$outFILE" ]; then
   ifdh cp ${thisOutputCreationDir}/cafpyana/log_${nProcess}.log ${outDir}/log_${nProcess}.log
   echo "@@ Done!"
 else
-  ifdh cp ${thisOutputCreationDir}/log_${nProcess}.log ${outDir}/log_${nProcess}.log
+  ifdh cp ${thisOutputCreationDir}/cafpyana/log_${nProcess}.log ${outDir}/log_${nProcess}.log
   echo "File not exist"
 fi

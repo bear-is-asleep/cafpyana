@@ -164,8 +164,8 @@ def _loaddf(applyfs, preprocess, g):
                 print(f"All {attempts} attempts failed for {fname}: {type(e).__name__}: {e}", file=sys.stderr, flush=True)
                 print(f"Could not open file ({fname}). Skipping...", file=sys.stderr, flush=True)
                 #Write filename to a list
-                with open(f'/exp/sbnd/app/users/brindenc/develop/cafpyana/analysis_village/numuincl/error_files.list', 'a') as f:
-                    f.write(fname + '\n')
+                # with open(f'/exp/sbnd/app/users/brindenc/develop/cafpyana/analysis_village/numuincl/error_files.list', 'a') as f:
+                #     f.write(fname + '\n')
                 traceback.print_exc(file=sys.stderr)
                 dfs = None
 

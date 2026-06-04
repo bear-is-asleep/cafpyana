@@ -5,6 +5,8 @@ from .util import *
 from .calo import *
 from .chi2pid import SBND_CALO_PARAMS
 from . import numisyst, g4syst, geniesyst, bnbsyst
+from analysis_village.numuincl.sbnd.detector.volume import involume, enters
+from analysis_village.numuincl.sbnd.detector.definitions import AV_BUFFER, TPC0_BUFFER, TPC1_BUFFER, NOT_FV_HIGH_Z
 
 PDG = {
     "muon": [13, "muon", 0.105,],
@@ -218,6 +220,20 @@ def make_trkdf(f, scoreCut=False, requiret0=False, requireCosmic=False, mcs=Fals
                             print("WARNING: no selected tracks")
 
 
+    trkdf[("pfp", "trk", "is_contained", "", "", "")] =\
+        involume(trkdf.pfp.trk.start, AV_BUFFER) &\
+        ~involume(trkdf.pfp.trk.start, NOT_FV_HIGH_Z) &\
+        involume(trkdf.pfp.trk.end, AV_BUFFER) &\
+        ~involume(trkdf.pfp.trk.end, NOT_FV_HIGH_Z)
+    trkdf[("pfp", "trk", "cont_tpc0", "", "", "")] =\
+        involume(trkdf.pfp.trk.start, TPC0_BUFFER) &\
+        involume(trkdf.pfp.trk.end, TPC0_BUFFER) &\
+        ~enters(trkdf.pfp.trk.start, trkdf.pfp.trk.end, NOT_FV_HIGH_Z)
+    trkdf[("pfp", "trk", "cont_tpc1", "", "", "")] =\
+        involume(trkdf.pfp.trk.start, TPC1_BUFFER) &\
+        involume(trkdf.pfp.trk.end, TPC1_BUFFER) &\
+        ~enters(trkdf.pfp.trk.start, trkdf.pfp.trk.end, NOT_FV_HIGH_Z)
+
     trkdf[("pfp", "tindex", "", "", "", "")] = trkdf.index.get_level_values(2)
     # with open('/exp/sbnd/app/users/brindenc/develop/cafpyana/analysis_village/numuincl/trkdf_keys_inmaker2.txt','w') as f:
     #     for k in trkdf.columns:
@@ -243,6 +259,8 @@ def make_trkhitdf(f,plane):
 def make_slcdf(f, **kwargs):
     slcdf = loadbranches(f["recTree"], slcbranches)
     slcdf = slcdf.rec
+    if len(slcdf) == 0:
+        raise Exception('slcdf is empty for file')
 
     slc_mcdf = make_mcdf(f, slc_mcbranches, slc_mcprimbranches, **kwargs)
     slc_mcdf.columns = pd.MultiIndex.from_tuples([tuple(["slc", "truth"] + list(c)) for c in slc_mcdf.columns])
@@ -297,7 +315,9 @@ def make_mcdf(f, branches=mcbranches, primbranches=mcprimbranches, include_mu=Tr
         mcdf.loc[:, ('mu','dir','y')] = mcdf.mu.genp.y/mcdf.mu.totp
         mcdf.loc[:, ('mu','dir','z')] = mcdf.mu.genp.z/mcdf.mu.totp
         # Is contained
-        mcdf.loc[:, ('mu','is_contained','')] = InFV(mcdf.mu.start, 0, det="SBND AV") & InFV(mcdf.mu.end, 0, det="SBND AV")
+        mcdf.loc[:, ('mu','is_contained','')] = involume(mcdf.mu.start, AV_BUFFER) & involume(mcdf.mu.end, AV_BUFFER) & ~involume(mcdf.mu.start, NOT_FV_HIGH_Z) & ~involume(mcdf.mu.end, NOT_FV_HIGH_Z)
+        mcdf.loc[:, ('mu','cont_tpc0','')] = involume(mcdf.mu.start, TPC0_BUFFER) & involume(mcdf.mu.end, TPC0_BUFFER) & ~involume(mcdf.mu.start, NOT_FV_HIGH_Z) & ~involume(mcdf.mu.end, NOT_FV_HIGH_Z)
+        mcdf.loc[:, ('mu','cont_tpc1','')] = involume(mcdf.mu.start, TPC1_BUFFER) & involume(mcdf.mu.end, TPC1_BUFFER) & ~involume(mcdf.mu.start, NOT_FV_HIGH_Z) & ~involume(mcdf.mu.end, NOT_FV_HIGH_Z)
 
     if include_pi:
         cpidf = mcprimdf[np.abs(mcprimdf.pdg)==211].sort_values(mcprimdf.index.names[:2] + [("genE", "")]).groupby(level=[0,1]).last()

@@ -12,8 +12,6 @@ import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Dict, Optional
-from sbnd.general.utils import convert_pnfs_to_xroot
-
 import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -28,6 +26,7 @@ FLAG_MAP = {
     "ngrid": "-ngrid",
     "nfile": "-nfile",
     "split": "-split",
+    "memory": "-memory",
 }
 
 
@@ -43,8 +42,8 @@ def main() -> None:
     yaml_path = Path(args.yaml).resolve()
     config = load_config(yaml_path)
     jobs = config["jobs"]
-    input_dir = convert_pnfs_to_xroot(config.get("input_dir"))
-    output_dir = convert_pnfs_to_xroot(config.get("output_dir"))
+    input_dir = config.get("input_dir")
+    output_dir = config.get("output_dir")
     selected = set(args.only) if args.only else None
 
     GENERATED_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
@@ -141,6 +140,7 @@ def run_job(
     dry_run: bool,
     input_dir: Optional[str],
     output_dir: Optional[str],
+    overwrite: bool = True,
 ) -> None:
     #os.system("source /exp/sbnd/app/users/brindenc/develop/cafpyana/setup.sh") # Source the setup script
     slug = slugify(job["name"])
@@ -158,17 +158,14 @@ def run_job(
     ngrid = job_ngrid(job)
     # Grid writes per-chunk dfs under scratch; skip check only makes sense for pool mode.
     if ngrid <= 0 and file_exists(output):
-        print("=" * 80)
-        print(f"[{job['name']}] SKIPPED - Output file already exists:")
-        print(f"  {output}")
-        print("=" * 80)
-        return
-
-    if ngrid > 0 and "generated" in cfg_path.parts:
-        print(
-            f"[{job['name']}] grid: ensure configs/generated/{cfg_path.name} is committed "
-            "so run_df_maker git archive includes it on workers."
-        )
+        if overwrite:
+            os.remove(output)
+        else:
+            print("=" * 80)
+            print(f"[{job['name']}] SKIPPED - Output file already exists:")
+            print(f"  {output}")
+            print("=" * 80)
+            return
 
     cmd = build_command(job, cfg_path, slug, input_dir, output_dir)
     print("=" * 80)
