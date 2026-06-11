@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import gc
 import json
 import sys
 import warnings
@@ -32,11 +33,8 @@ from detsys_config import (
     CALO_CUTS,
     CALO_SUFFIXES,
     CALO_VARS,
-    DET_VARS_ALL,
-    cut_chain_for_output,
     build_config,
     build_file_map,
-    format_file_map_summary,
     chunk_file_list,
     compute_normalization,
     load_normalization_json,
@@ -79,14 +77,18 @@ OFFBEAM_COMBINE_OFFSET = int(1e7)
 LOWE_COMBINE_OFFSET = int(2e7)
 COSMIC_NT_LO = int(1e7)
 
+# Cap parallel HDF readers when many files are loaded at once (spawn RSS spikes).
+_LOAD_NCPU_MANY_FILES = 4
+_LOAD_NCPU_MANY_FILES_THRESHOLD = 8
 
-def _load_progress(cfg, verbose: bool) -> bool:
-    """Per-file CAF/HDF bars only with --verbose (outer tqdm loops stay on by default)."""
-    return verbose
 
-
-def _progress_iter(cfg, iterable, **kwargs):
-    return tqdm(iterable, disable=not cfg.show_progress, **kwargs)
+def _load_ncpu(cfg, n_files: int) -> int:
+    if n_files <= 1:
+        return 1
+    cap = cfg.ncpu
+    if n_files > _LOAD_NCPU_MANY_FILES_THRESHOLD:
+        cap = min(cap, _LOAD_NCPU_MANY_FILES)
+    return max(1, min(cap, n_files))
 
 
 def _preprocess(slc: CAFSlice) -> None:
@@ -145,8 +147,8 @@ def _load_slice_chunk(
         fnames,
         key=PAND_KEY,
         file_index_offset=file_index_offset,
-        ncpu=cfg.ncpu,
-        verbose=_load_progress(cfg, verbose),
+        ncpu=_load_ncpu(cfg, len(fnames)),
+        verbose=verbose,
     )
     _preprocess(slc)
     if rename_slim:
@@ -238,19 +240,41 @@ def _get_values(slc: CAFSlice, key: str | None) -> np.ndarray | None:
     return slc.data[col].values
 
 
+def _load_pand_concat(
+    cfg,
+    fnames: list[str],
+    *,
+    file_index_offset: int = 0,
+    verbose: bool = False,
+) -> pd.DataFrame:
+    """Load evt_pand* from fnames in disk chunks to limit parallel decode RSS."""
+    parts: list[pd.DataFrame] = []
+    file_base = file_index_offset
+    for chunk_files in chunk_file_list(fnames, cfg.chunk_nfiles):
+        slc = CAFSlice.load(
+            chunk_files,
+            key=PAND_KEY,
+            file_index_offset=file_base,
+            ncpu=_load_ncpu(cfg, len(chunk_files)),
+            verbose=verbose,
+        )
+        file_base += len(chunk_files)
+        parts.append(slc.data)
+    if not parts:
+        return pd.DataFrame()
+    return pd.concat(parts) if len(parts) > 1 else parts[0]
+
+
 def _prepare_aux(cfg, file_map, norm, verbose: bool) -> AuxBases:
-    load_progress = _load_progress(cfg, verbose)
-    slc_lowe = CAFSlice.load(
-        file_map["MC_LOWE_FNAMES"], key=PAND_KEY, ncpu=cfg.ncpu, verbose=load_progress
-    )
+    lowe_data = _load_pand_concat(cfg, file_map["MC_LOWE_FNAMES"], verbose=verbose)
+    slc_lowe = CAFSlice(lowe_data)
     _preprocess(slc_lowe)
     slc_lowe.scale_to_pot(
         norm["POT_DATA"], sample_pot=norm["POT_MC_LOWE_FULL"], overwrite=True, verbose=verbose
     )
     slc_lowe.pot = float(norm["POT_DATA"])
-    slc_offbeam_data = CAFSlice.load(
-        file_map["DATA_OFFBEAM_FNAMES"], key=PAND_KEY, ncpu=cfg.ncpu, verbose=load_progress
-    )
+    offbeam_data = _load_pand_concat(cfg, file_map["DATA_OFFBEAM_FNAMES"], verbose=verbose)
+    slc_offbeam_data = CAFSlice(offbeam_data)
     _preprocess(slc_offbeam_data)
     slc_offbeam_data.scale_to_livetime(
         norm["LIVETIME_DATA"],
@@ -263,116 +287,19 @@ def _prepare_aux(cfg, file_map, norm, verbose: bool) -> AuxBases:
     return AuxBases(lowe=slc_lowe, offbeam_data=slc_offbeam_data)
 
 
-def _accumulate_offbeam_mc_at_cut(
-    cfg, file_map, norm, cut_chain, verbose: bool
-) -> CAFSlice:
-    parts: list[pd.DataFrame] = []
-    file_base = 0
-    chunks = chunk_file_list(file_map["OFFBEAM_FNAMES"], cfg.chunk_nfiles)
-    for chunk_files in _progress_iter(cfg, chunks, desc="offbeam MC", unit="chunk", leave=False):
-        slc = _load_slice_chunk(
-            cfg,
-            chunk_files,
-            cut_chain,
-            norm=norm,
-            sample_scale=norm["LIVETIME_OFFBEAM_FULL"],
-            scale_mode="livetime",
-            file_index_offset=file_base,
-            verbose=verbose,
-        )
-        file_base += len(chunk_files)
-        parts.append(slc.data)
-    return CAFSlice(
-        pd.concat(parts) if len(parts) > 1 else parts[0],
-        livetime=norm["LIVETIME_OFFBEAM_FULL"],
-        duplicate_ok=True,
-    )
-
-
-def _accumulate_nominal_cosmic_signal_at_cut(
-    cfg,
-    file_map,
-    norm,
-    cut_chain,
-    categories: list[int],
-    verbose: bool,
-) -> CAFSlice:
-    """MC nominal at cut, signal category only (shared cosmic signal leg; no lowe)."""
-    parts: list[pd.DataFrame] = []
-    file_base = 0
-    chunks = chunk_file_list(file_map["MC_NOMINAL_FNAMES"], cfg.chunk_nfiles)
-    for chunk_files in _progress_iter(cfg, chunks, desc="cosmic nominal", unit="chunk", leave=False):
-        slc = _load_slice_chunk(
-            cfg,
-            chunk_files,
-            cut_chain,
-            norm=norm,
-            sample_scale=norm["POT_NOMINAL"],
-            scale_mode="pot",
-            file_index_offset=file_base,
-            verbose=verbose,
-        )
-        file_base += len(chunk_files)
-        if len(slc.data) > 0:
-            parts.append(slc.data)
-    if not parts:
-        return CAFSlice(pd.DataFrame(), pot=float(norm["POT_NOMINAL"]))
-    data = pd.concat(parts) if len(parts) > 1 else parts[0]
-    slc = CAFSlice(data, pot=float(norm["POT_DATA"]), duplicate_ok=True)
-    slc_sig, _ = _split_signal_background(slc, categories)
-    return slc_sig
-
-
-def _accumulate_nominal_slice(
-    cfg,
-    file_map,
-    norm,
-    cut_chain,
-    aux_bases: AuxBases,
-    verbose: bool,
-) -> CAFSlice:
-    parts: list[pd.DataFrame] = []
-    file_base = 0
-    chunks = chunk_file_list(file_map["MC_NOMINAL_FNAMES"], cfg.chunk_nfiles)
-    for chunk_files in _progress_iter(cfg, chunks, desc="nominal @ muon", unit="chunk", leave=False):
-        slc = _load_slice_chunk(
-            cfg,
-            chunk_files,
-            cut_chain,
-            norm=norm,
-            sample_scale=norm["POT_NOMINAL"],
-            scale_mode="pot",
-            file_index_offset=file_base,
-            verbose=verbose,
-        )
-        file_base += len(chunk_files)
-        parts.append(slc.data)
-    if not parts:
-        raise ValueError("MC_NOMINAL_FNAMES produced no data")
-    nominal = CAFSlice(
-        pd.concat(parts) if len(parts) > 1 else parts[0],
-        pot=norm["POT_NOMINAL"],
-        duplicate_ok=True,
-    )
-    aux_bases.apply_cuts_and_combine(nominal, cut_chain, verbose=verbose)
-    nominal.pot = float(norm["POT_DATA"])
-    return nominal
-
-
-def _build_calo_slices_at_muon(nominal_at_muon: CAFSlice) -> list[CAFSlice]:
-    slcs_calo = [nominal_at_muon.copy(duplicate_ok=True) for _ in CALO_SUFFIXES]
-    base_has_muon = nominal_at_muon.get_key("has_muon")[0]
-    for slc, suffix in zip(slcs_calo, CALO_SUFFIXES):
-        has_muon_key = f"has_muon{suffix}"
-        mask = _ntuple_level(slc.data.index) >= COSMIC_NT_LO
-        if int(mask.sum()) > 0 and base_has_muon in slc.data.columns:
-            values = np.array(slc.data.loc[mask, base_has_muon].values, dtype=bool)
-        else:
-            values = np.zeros(int(mask.sum()), dtype=bool)
-        slc.add_cols(has_muon_key, values, conditions=mask, fill=False, verbose=False)
-        has_muon_col = slc.get_key(has_muon_key)[0]
-        slc.data = slc.data[slc.data[has_muon_col].astype(bool)]
-    return slcs_calo
+def _slice_for_calo_suffix(slc: CAFSlice, suffix: str) -> CAFSlice:
+    """Keep rows matching has_muon{suffix} on combined cosmic NT (notebook parity)."""
+    has_muon_key = f"has_muon{suffix}"
+    base_has_muon = slc.get_key("has_muon")[0]
+    mask = _ntuple_level(slc.data.index) >= COSMIC_NT_LO
+    if int(mask.sum()) > 0 and base_has_muon in slc.data.columns:
+        values = np.array(slc.data.loc[mask, base_has_muon].values, dtype=bool)
+    else:
+        values = np.zeros(int(mask.sum()), dtype=bool)
+    slc.add_cols(has_muon_key, values, conditions=mask, fill=False, verbose=False)
+    has_muon_col = slc.get_key(has_muon_key)[0]
+    slc.data = slc.data[slc.data[has_muon_col].astype(bool)]
+    return slc
 
 
 def _init_det_var_systems(specs, var: str) -> dict[str, Systematics]:
@@ -494,9 +421,8 @@ def _accumulate_shared_nominal_cv(
     systems_cv = _init_det_var_systems(specs, ref_var)
 
     file_base = 0
-    nom_chunks = chunk_file_list(nom_fnames, cfg.chunk_nfiles)
     for cv_chunk_idx, chunk_files in enumerate(
-        _progress_iter(cfg, nom_chunks, desc="nominal CV", unit="chunk", leave=False)
+        chunk_file_list(nom_fnames, cfg.chunk_nfiles)
     ):
         slc = _load_slice_chunk(
             cfg,
@@ -538,201 +464,22 @@ def _merge_det_var_systematics(main_sys: Systematics, var_sys: Systematics, var:
     main_sys.systematics[var] = copy.deepcopy(var_sys.systematics[var])
 
 
-def _resolve_build_mode(args) -> str:
-    flags = {
-        "tiny": args.tiny,
-        "small": args.small,
-        "full_slim": args.full_slim,
-        "full_slim_test": args.full_slim_test,
-        "full_det": args.full_det,
-        "full_det_test": args.full_det_test,
-        "full_cosmic": args.full_cosmic,
-        "full_cosmic_test": args.full_cosmic_test,
-    }
-    chosen = [name for name, on in flags.items() if on]
-    if len(chosen) > 1:
-        raise ValueError(
-            "Mutually exclusive build modes: at most one of "
-            "--tiny, --small, --full-slim, --full-slim-test, --full-det, "
-            "--full-det-test, --full-cosmic, --full-cosmic-test "
-            f"(got {chosen})"
-        )
-    if not chosen:
-        return "default"
-    if flags["tiny"]:
-        return "tiny"
-    if flags["small"]:
-        return "small"
-    if flags["full_slim"]:
-        return "full_slim"
-    if flags["full_slim_test"]:
-        return "full_slim_test"
-    if flags["full_det"]:
-        return "full_det"
-    if flags["full_det_test"]:
-        return "full_det_test"
-    if flags["full_cosmic"]:
-        return "full_cosmic"
-    return "full_cosmic_test"
-
-
-def _truth_keys_from_data(slc_data: CAFSlice):
-    return slc_data.data.truth.keys()
-
-
-def _init_systems(
-    specs,
-    slc_data,
-    truth_keys,
-    *,
-    include_slim_keys: bool = True,
-) -> dict[str, Systematics]:
-    """Chunked-build systematics; det vars merged later, CALO before calo step."""
+def _init_systems(specs, slc_data, truth_keys) -> dict[str, Systematics]:
+    """RW-only systematics; det vars are merged later, CALO initialized before calo step."""
     systems: dict[str, Systematics] = {}
-    pattern = SLIM_KEYS if include_slim_keys else None
-    init_keys = truth_keys if include_slim_keys else []
     for name, bins, reco_key, _true_key, xsec in specs:
         data_vals = _get_values(slc_data, reco_key)
         systems[name] = Systematics.for_chunked_build(
             name,
             bins,
-            init_keys,
+            truth_keys,
             xsec_unit=xsec,
-            pattern=pattern,
+            pattern=SLIM_KEYS,
             stype="RW",
             data=data_vals,
             genweights_data=np.ones(len(data_vals), dtype=float),
         )
     return systems
-
-
-def _run_slim_pass(
-    *,
-    cfg,
-    specs,
-    slc_data,
-    slim_chunks,
-    norm,
-    cut_chain,
-    categories,
-    slc_lowe,
-    slc_offbeam_data,
-    verbose: bool,
-) -> dict[str, Systematics]:
-    systems: dict[str, Systematics] = {}
-    slim_file_base = 0
-    for chunk_idx, chunk_files in enumerate(
-        _progress_iter(
-            cfg,
-            slim_chunks,
-            desc=f"{cut_chain[-1]} slim",
-            unit="chunk",
-        )
-    ):
-        slc_chunk = _load_slice_chunk(
-            cfg,
-            chunk_files,
-            None,
-            norm=norm,
-            sample_scale=norm["POT_MC_SLIM_FULL"],
-            scale_mode="pot",
-            rename_slim=True,
-            file_index_offset=slim_file_base,
-            verbose=verbose,
-        )
-        slim_file_base += len(chunk_files)
-        if chunk_idx == 0:
-            slc_chunk.combine(slc_offbeam_data, duplicate_ok=True, offset=OFFBEAM_COMBINE_OFFSET)
-            slc_chunk.combine(slc_lowe, duplicate_ok=True, offset=LOWE_COMBINE_OFFSET)
-        slc_chunk.pot = float(norm["POT_DATA"])
-
-        slc_sig_full, _ = _split_signal_background(slc_chunk, categories)
-        slc_chunk.apply_cut_chain(cut_chain, verbose=verbose)
-        slc_sel_sig, slc_sel_bg = _split_signal_background(slc_chunk, categories)
-        if len(slc_sel_sig.data) == 0 and len(slc_sel_bg.data) == 0:
-            continue
-
-        if not systems:
-            truth_keys = slc_sig_full.data.truth.keys()
-            systems = _init_systems(
-                specs, slc_data, truth_keys, include_slim_keys=True
-            )
-
-        gen_sel = _get_values(slc_sel_sig, "genweight")
-        gen_bg = _get_values(slc_sel_bg, "genweight")
-        gen_sig_full = _get_values(slc_sig_full, "genweight")
-
-        for name, _bins, reco_key, true_key, _xsec in specs:
-            sys_obj = systems[name]
-            sys_obj.accumulate_cv_chunk(
-                reco_sel=_get_values(slc_sel_sig, reco_key),
-                reco_sel_background=_get_values(slc_sel_bg, reco_key),
-                genweights_sel=gen_sel,
-                genweights_sel_background=gen_bg,
-                true_sig=_get_values(slc_sig_full, true_key) if true_key else None,
-                true_sel=_get_values(slc_sel_sig, true_key) if true_key else None,
-                true_sel_background=_get_values(slc_sel_bg, true_key) if true_key else None,
-                genweights_sig=gen_sig_full,
-            )
-            sys_obj.process_systematics_chunk(
-                slc_sig_full.data,
-                slc_sel_sig.data,
-                slc_sel_bg.data,
-                sys_names=SLIM_KEYS,
-            )
-    return systems
-
-
-def _metadata_bins_present(cut_universe_dir: str, variable_name: str) -> bool:
-    meta_dir = Path(cut_universe_dir) / "metadata_detsys"
-    return (meta_dir / f"{variable_name}_bins.csv").is_file()
-
-
-def _warn_missing_cv_metadata(cut_universe_dir: str, build_mode: str) -> None:
-    """Merge passes skip metadata; det must run first on the same --day."""
-    if build_mode == "full_det":
-        return
-    ref_var = "costheta"
-    if _metadata_bins_present(cut_universe_dir, ref_var):
-        return
-    warnings.warn(
-        f"CV metadata missing under {cut_universe_dir}/metadata_detsys "
-        f"({ref_var}_bins.csv). Run --full-det (or --full-det-test) with the "
-        "same --day before cosmic/slim merge passes.",
-        stacklevel=2,
-    )
-
-
-def _save_for_mode(systems: dict[str, Systematics], cut_universe_dir: str, build_mode: str) -> None:
-    det_calo_keys = list(DET_VARS_ALL) + list(CALO_VARS)
-    cosmic_keys = ["cosmic", "cosmic_data"]
-    if build_mode in ("full_slim", "full_cosmic"):
-        _warn_missing_cv_metadata(cut_universe_dir, build_mode)
-    for name, sys_obj in systems.items():
-        if build_mode == "full_slim":
-            sys_obj.save(
-                cut_universe_dir,
-                metadata_dir="metadata_detsys",
-                include_sys_keys=SLIM_KEYS,
-                skip_metadata=True,
-                merge_sys_dict=True,
-            )
-        elif build_mode == "full_det":
-            sys_obj.save(
-                cut_universe_dir,
-                metadata_dir="metadata_detsys",
-                include_sys_keys=det_calo_keys,
-            )
-        elif build_mode == "full_cosmic":
-            sys_obj.save(
-                cut_universe_dir,
-                metadata_dir="metadata_detsys",
-                include_sys_keys=cosmic_keys,
-                skip_metadata=True,
-                merge_sys_dict=True,
-            )
-        else:
-            sys_obj.save(cut_universe_dir, metadata_dir="metadata_detsys")
 
 
 def _ensure_calo_systematics(systems: dict[str, Systematics]) -> None:
@@ -783,7 +530,7 @@ def _warn_pot_scaling_mismatch(
     var: str, norm: dict, var_scale: dict, *, cfg
 ) -> None:
     """Warn when full-build POT in pot_scaling.json disagrees with current file_map."""
-    if cfg.build_mode in ("tiny", "small"):
+    if cfg.small or cfg.tiny:
         return
     pot_det = norm.get("POT_DET", {}).get(var)
     pot_det_full = var_scale.get("POT_DET_FULL")
@@ -899,11 +646,11 @@ def _process_det_chunks(
     det_vars = file_map["DET_VARS"]
     det_fnames = file_map["DET_FNAMES"]
 
-    for var, flist in _progress_iter(
-        cfg,
+    for var, flist in tqdm(
         list(zip(det_vars, det_fnames)),
-        desc=f"{cut_chain[-1]} det vars",
+        desc="det vars",
         unit="var",
+        disable=not verbose,
     ):
         if not flist:
             continue
@@ -918,10 +665,7 @@ def _process_det_chunks(
                 _promote_nominal_cv_truth(systems_var[name], systems[name])
 
         file_base = 0
-        var_chunks = chunk_file_list(flist, cfg.chunk_nfiles)
-        for chunk_idx, chunk_files in enumerate(
-            _progress_iter(cfg, var_chunks, desc=f"  {var}", unit="chunk", leave=False)
-        ):
+        for chunk_idx, chunk_files in enumerate(chunk_file_list(flist, cfg.chunk_nfiles)):
             slc = _load_slice_chunk(
                 cfg,
                 chunk_files,
@@ -956,63 +700,92 @@ def _process_det_chunks(
                 _merge_det_var_systematics(systems[name], systems_var[name], var)
 
 
-def _process_calo_systematics(
-    systems,
+def _process_calo_chunked(
+    systems: dict[str, Systematics],
     specs,
-    slcs_calo: list[CAFSlice],
-    categories: list[int],
-):
-    for calo_var, slc in zip(CALO_VARS, slcs_calo):
-        slc_sig, slc_bg = _split_signal_background(slc, categories)
-        for name, _bins, reco_key, true_key, _xsec in specs:
-            if name not in systems:
-                continue
-            sys_obj = systems[name]
-            reco_sel = _get_values(slc_sig, reco_key)
-            reco_bg = _get_values(slc_bg, reco_key)
-            gen_sel = _get_values(slc_sig, "genweight")
-            gen_bg = _get_values(slc_bg, "genweight")
-            true_sig = _get_values(slc_sig, true_key) if true_key else None
-            sys_obj.process_det_systematics(
-                [reco_sel],
-                [reco_bg],
-                [gen_sel],
-                [gen_bg],
-                true_sig_vars=[true_sig] if true_sig is not None else None,
-                true_sel_vars=[true_sig] if true_sig is not None else None,
-                true_sel_background_vars=[_get_values(slc_bg, true_key)] if true_key else None,
-                sys_names=[calo_var],
-                accumulate=False,
-            )
-
-
-def _process_cosmic(
-    system,
-    name,
-    bins,
-    reco_key,
-    xsec_unit,
-    slc_nominal_sig: CAFSlice,
-    slc_offbeam_mc: CAFSlice,
-    slc_offbeam_data: CAFSlice,
-    cut,
     cfg,
-):
-    """CV: nominal signal + data offbeam; variation: nominal signal + MC offbeam."""
-    reco_sel_nom = _get_values(slc_nominal_sig, reco_key)
-    gen_sel_nom = _get_values(slc_nominal_sig, "genweight")
+    file_map,
+    norm: dict,
+    cut_chain: list[str],
+    aux_bases: AuxBases,
+    categories: list[int],
+    verbose: bool,
+) -> None:
+    """Accumulate CALO det systematics from nominal MC chunks (no full concat)."""
+    _ensure_calo_systematics(systems)
+    empty = np.array([], dtype=float)
+    file_base = 0
+    for chunk_idx, chunk_files in enumerate(
+        chunk_file_list(file_map["MC_NOMINAL_FNAMES"], cfg.chunk_nfiles)
+    ):
+        slc = _load_slice_chunk(
+            cfg,
+            chunk_files,
+            cut_chain,
+            norm=norm,
+            sample_scale=0.0,
+            scale_mode="none",
+            aux_bases=aux_bases if chunk_idx == 0 else None,
+            file_index_offset=file_base,
+            verbose=verbose,
+        )
+        file_base += len(chunk_files)
+        if chunk_idx == 0:
+            slc.pot = float(norm["POT_DATA"])
+        accumulate = chunk_idx > 0
+        for calo_var, suffix in zip(CALO_VARS, CALO_SUFFIXES):
+            slc_calo = _slice_for_calo_suffix(slc.copy(duplicate_ok=True), suffix)
+            if len(slc_calo.data) == 0:
+                continue
+            slc_sig, slc_bg = _split_signal_background(slc_calo, categories)
+            for name, _bins, reco_key, true_key, _xsec in specs:
+                if name not in systems:
+                    continue
+                reco_sel = _get_values(slc_sig, reco_key)
+                reco_bg = _get_values(slc_bg, reco_key)
+                gen_sel = _get_values(slc_sig, "genweight")
+                gen_bg = _get_values(slc_bg, "genweight")
+                true_sig = _get_values(slc_sig, true_key) if true_key else None
+                systems[name].process_det_systematics(
+                    [reco_sel],
+                    [reco_bg],
+                    [gen_sel],
+                    [gen_bg],
+                    true_sig_vars=[true_sig] if true_sig is not None else None,
+                    true_sel_vars=[true_sig] if true_sig is not None else None,
+                    true_sel_background_vars=[_get_values(slc_bg, true_key)] if true_key else None,
+                    sys_names=[calo_var],
+                    accumulate=accumulate,
+                )
+        del slc
+
+
+def _process_cosmic_chunked(
+    system: Systematics,
+    name: str,
+    bins,
+    reco_key: str,
+    xsec_unit,
+    cfg,
+    file_map,
+    norm: dict,
+    cut_chain: list[str],
+    categories: list[int],
+    slc_offbeam_data: CAFSlice,
+    cut: str,
+    verbose: bool,
+) -> None:
+    """Cosmic leg: chunk nominal signal + MC offbeam; CV background from data offbeam."""
     reco_bg_cv = _get_values(slc_offbeam_data, reco_key)
     gen_bg_cv = _get_values(slc_offbeam_data, "genweight")
-    reco_bg_var = _get_values(slc_offbeam_mc, reco_key)
-    gen_bg_var = _get_values(slc_offbeam_mc, "genweight")
+    empty = np.array([], dtype=float)
 
     cosmic = Systematics(
         name,
         bins,
-        reco_sel_nom,
+        empty,
         reco_bg_cv,
-        gen_sel_nom,
-        gen_sel_nom,
+        empty,
         gen_bg_cv,
         xsec_unit=xsec_unit,
         true_sig=None,
@@ -1024,17 +797,71 @@ def _process_cosmic(
         data=system._data,
         genweights_data=system._genweights_data,
     )
-    cosmic.process_det_systematics(
-        [reco_sel_nom],
-        [reco_bg_var],
-        [gen_sel_nom],
-        [gen_bg_var],
-        true_sel_vars=None,
-        sys_names=["cosmic"],
-    )
-    cosmic_sd = cosmic.systematics["cosmic"]
-    cosmic_sd["type"] = "cosmic"
-    cosmic_sd["variation"] = "unisim"
+
+    file_base = 0
+    accumulate_sig = False
+    for chunk_files in chunk_file_list(file_map["MC_NOMINAL_FNAMES"], cfg.chunk_nfiles):
+        slc = _load_slice_chunk(
+            cfg,
+            chunk_files,
+            cut_chain,
+            norm=norm,
+            sample_scale=norm["POT_NOMINAL"],
+            scale_mode="pot",
+            file_index_offset=file_base,
+            verbose=verbose,
+        )
+        file_base += len(chunk_files)
+        slc_sig, _ = _split_signal_background(slc, categories)
+        del slc
+        if len(slc_sig.data) == 0:
+            del slc_sig
+            continue
+        reco_sel = _get_values(slc_sig, reco_key)
+        gen_sel = _get_values(slc_sig, "genweight")
+        del slc_sig
+        cosmic.process_det_systematics(
+            [reco_sel],
+            [empty],
+            [gen_sel],
+            [empty],
+            true_sel_vars=None,
+            sys_names=["cosmic"],
+            accumulate=accumulate_sig,
+        )
+        accumulate_sig = True
+
+    file_base = 0
+    accumulate_ob = False
+    for chunk_files in chunk_file_list(file_map["OFFBEAM_FNAMES"], cfg.chunk_nfiles):
+        slc = _load_slice_chunk(
+            cfg,
+            chunk_files,
+            cut_chain,
+            norm=norm,
+            sample_scale=norm["LIVETIME_OFFBEAM_FULL"],
+            scale_mode="livetime",
+            file_index_offset=file_base,
+            verbose=verbose,
+        )
+        file_base += len(chunk_files)
+        if len(slc.data) == 0:
+            del slc
+            continue
+        reco_bg = _get_values(slc, reco_key)
+        gen_bg = _get_values(slc, "genweight")
+        del slc
+        cosmic.process_det_systematics(
+            [empty],
+            [reco_bg],
+            [empty],
+            [gen_bg],
+            true_sel_vars=None,
+            sys_names=["cosmic"],
+            accumulate=accumulate_ob,
+        )
+        accumulate_ob = True
+
     do_xsec_cov = (cut == cfg.cuts[-1]) and name in ("costheta", "momentum", "differential")
     cosmic.compute_covariances(keys=["cosmic"], compute_xsec_cov=do_xsec_cov)
     system.combine(cosmic, store_other=True, other_name="cosmic_data")
@@ -1048,37 +875,7 @@ def main() -> int:
     parser.add_argument(
         "--tiny",
         action="store_true",
-        help="Load one file per sample list (smoke test).",
-    )
-    parser.add_argument(
-        "--full-slim",
-        action="store_true",
-        help="Full slim RW only; lowe/data-offbeam at partial aux div.",
-    )
-    parser.add_argument(
-        "--full-det",
-        action="store_true",
-        help="Full det + CALO only; no slim or cosmic.",
-    )
-    parser.add_argument(
-        "--full-cosmic",
-        action="store_true",
-        help="Full cosmic only; full aux, no slim or det.",
-    )
-    parser.add_argument(
-        "--full-slim-test",
-        action="store_true",
-        help="Like --full-slim but file lists at 1/100 scale (_FULL_TEST_DIV).",
-    )
-    parser.add_argument(
-        "--full-det-test",
-        action="store_true",
-        help="Like --full-det but file lists at 1/100 scale (_FULL_TEST_DIV).",
-    )
-    parser.add_argument(
-        "--full-cosmic-test",
-        action="store_true",
-        help="Like --full-cosmic but file lists at 1/100 scale (_FULL_TEST_DIV).",
+        help="Load one file per sample list (smoke test; overrides --small).",
     )
     parser.add_argument("--chunk-size", type=int, default=8, help="Files per chunk for slim/det/nominal/offbeam.")
     parser.add_argument("--day", default=datetime.now().strftime("%Y%m%d"), help="Output day/tag.")
@@ -1090,42 +887,30 @@ def main() -> int:
         help="Recompute metadata/normalization.json from file_map and overwrite if present.",
     )
     parser.add_argument(
-        "--quiet",
-        action="store_true",
-        help="Disable tqdm progress bars (loads still run).",
-    )
-    parser.add_argument(
         "--verbose",
         action="store_true",
         help="Print cut and load progress.",
     )
-    parser.add_argument(
-        "--cuts",
-        choices=["all", "muon"],
-        default="all",
-        help="all: save precut through cont. muon: save muon, cont_full, cont only.",
-    )
     args = parser.parse_args()
     verbose = args.verbose
-    show_progress = not args.quiet
-
-    try:
-        build_mode = _resolve_build_mode(args)
-    except ValueError as exc:
-        parser.error(str(exc))
 
     cfg = build_config(
-        build_mode=build_mode,
+        small=args.small,
+        tiny=args.tiny,
         day=args.day,
         chunk_nfiles=args.chunk_size,
         ncpu=args.ncpu,
-        show_progress=show_progress,
-        cuts=args.cuts,
     )
     Path(cfg.save_dir).mkdir(parents=True, exist_ok=True)
     Path(cfg.plot_dir).mkdir(parents=True, exist_ok=True)
     file_map = build_file_map(cfg)
-    print(format_file_map_summary(cfg, file_map, chunk_nfiles=cfg.chunk_nfiles))
+    print(
+        f"File map subsample: tiny={cfg.tiny} small={cfg.small} "
+        f"slim={len(file_map['MC_SLIM_FNAMES'])} "
+        f"nominal={len(file_map['MC_NOMINAL_FNAMES'])} "
+        f"lowe={len(file_map['MC_LOWE_FNAMES'])} "
+        f"data_offbeam={len(file_map['DATA_OFFBEAM_FNAMES'])}"
+    )
     slim_chunks = chunk_file_list(file_map["MC_SLIM_FNAMES"], cfg.chunk_nfiles)
     cuts = cfg.cuts
 
@@ -1146,8 +931,9 @@ def main() -> int:
         }
         print(json.dumps(
             {
-                "build_mode": cfg.build_mode,
                 "cuts": cuts,
+                "tiny": cfg.tiny,
+                "small": cfg.small,
                 "ncpu": cfg.ncpu,
                 "chunk_size": cfg.chunk_nfiles,
                 "n_slim_files": len(file_map["MC_SLIM_FNAMES"]),
@@ -1165,20 +951,11 @@ def main() -> int:
         ))
         return 0
 
-    pot_scaling = None
-    if cfg.runs_det:
-        pot_scaling = require_artifacts(cfg, file_map["DET_VARS"])
-
+    pot_scaling = require_artifacts(cfg, file_map["DET_VARS"])
     norm_path = normalization_json_path(cfg.save_dir)
     if args.recompute_norm or not norm_path.is_file():
         written = write_normalization_json(
-            cfg.save_dir,
-            compute_normalization(
-                file_map,
-                mode=cfg.build_mode,
-                ncpu=cfg.ncpu,
-                show_progress=cfg.show_progress,
-            ),
+            cfg.save_dir, compute_normalization(file_map, ncpu=cfg.ncpu)
         )
         print(f"Wrote normalization to {written}")
     else:
@@ -1191,151 +968,165 @@ def main() -> int:
     xsec_unit = _compute_xsec_unit(norm["POT_DATA"])
     specs = _variable_specs(differential_edges, xsec_unit)
 
-    if cfg.show_progress:
-        tqdm.write("Loading aux (lowe + data offbeam)...")
     aux_bases = _prepare_aux(cfg, file_map, norm, verbose)
 
-    # CALO snapshots are built once at muon and reused for cont_full/cont (notebook parity).
-    slcs_calo: list[CAFSlice] | None = None
-    for cut in _progress_iter(cfg, cuts, desc="cuts", unit="cut"):
-        cut_chain = cut_chain_for_output(cut, cfg.cuts)
-        if verbose:
-            print(f"Processing cut {cut} with chain {cut_chain}")
-
-        if cfg.runs_det and cut == "muon":
-            nominal_at_muon = _accumulate_nominal_slice(
-                cfg, file_map, norm, cut_chain, aux_bases, verbose
-            )
-            slcs_calo = _build_calo_slices_at_muon(nominal_at_muon)
-
-        if cfg.runs_det and slcs_calo is not None and cut in {"cont_full", "cont"}:
-            for slc in slcs_calo:
-                _preprocess(slc)
-                slc.apply_cut(cut, verbose=verbose)
+    for cut in cuts:
+        cut_chain = cfg.cuts[: cfg.cuts.index(cut) + 1] if cut in cfg.cuts else [cut]
+        print(f"Processing cut {cut} with chain {cut_chain}")
 
         slc_data = CAFSlice.load(
             file_map["DATA_FNAMES"],
             key=PAND_KEY,
-            ncpu=cfg.ncpu,
-            verbose=_load_progress(cfg, verbose),
+            ncpu=_load_ncpu(cfg, len(file_map["DATA_FNAMES"])),
+            verbose=verbose,
         )
         _preprocess(slc_data)
         slc_data.apply_cut_chain(cut_chain, verbose=verbose)
 
         slc_lowe = aux_bases.lowe.copy()
         slc_offbeam_data = aux_bases.offbeam_data.copy()
-        _preprocess(slc_lowe)
-        _preprocess(slc_offbeam_data)
         slc_lowe.apply_cut_chain(cut_chain, verbose=verbose)
         slc_offbeam_data.apply_cut_chain(cut_chain, verbose=verbose)
 
-        slc_offbeam_mc = None
-        slc_nominal_sig = None
-        if cfg.runs_cosmic:
-            slc_offbeam_mc = _accumulate_offbeam_mc_at_cut(
-                cfg, file_map, norm, cut_chain, verbose
-            )
-            slc_nominal_sig = _accumulate_nominal_cosmic_signal_at_cut(
-                cfg, file_map, norm, cut_chain, categories, verbose
-            )
-
         systems: dict[str, Systematics] = {}
+        truth_keys = None
 
-        if cfg.runs_slim:
-            systems = _run_slim_pass(
-                cfg=cfg,
-                specs=specs,
-                slc_data=slc_data,
-                slim_chunks=slim_chunks,
+        slim_file_base = 0
+        for chunk_idx, chunk_files in enumerate(
+            tqdm(slim_chunks, desc=f"{cut} slim", unit="chunk", disable=not verbose)
+        ):
+            slc_chunk = _load_slice_chunk(
+                cfg,
+                chunk_files,
+                None,
                 norm=norm,
-                cut_chain=cut_chain,
-                categories=categories,
-                slc_lowe=slc_lowe,
-                slc_offbeam_data=slc_offbeam_data,
+                sample_scale=norm["POT_MC_SLIM_FULL"],
+                scale_mode="pot",
+                rename_slim=True,
+                file_index_offset=slim_file_base,
                 verbose=verbose,
             )
-            if not systems and cfg.full_slim:
-                print(f"No slim events after cuts for {cut}, skipping")
-                continue
-            if systems and cfg.runs_det:
-                for name in systems:
-                    systems[name].finalize_chunked_build()
-                    _pin_slim_cv_sel(systems[name])
+            slim_file_base += len(chunk_files)
+            if chunk_idx == 0:
+                slc_chunk.combine(slc_offbeam_data, duplicate_ok=True, offset=OFFBEAM_COMBINE_OFFSET)
+                slc_chunk.combine(slc_lowe, duplicate_ok=True, offset=LOWE_COMBINE_OFFSET)
+            slc_chunk.pot = float(norm["POT_DATA"])
 
-        if not systems and (cfg.runs_det or cfg.runs_cosmic):
-            truth_keys = _truth_keys_from_data(slc_data)
-            systems = _init_systems(
-                specs, slc_data, truth_keys, include_slim_keys=False
-            )
+            slc_sig_full, _ = _split_signal_background(slc_chunk, categories)
+            slc_chunk.apply_cut_chain(cut_chain, verbose=verbose)
+            slc_sel_sig, slc_sel_bg = _split_signal_background(slc_chunk, categories)
+            if len(slc_sel_sig.data) == 0 and len(slc_sel_bg.data) == 0:
+                del slc_chunk, slc_sig_full, slc_sel_sig, slc_sel_bg
+                continue
+
+            if not systems:
+                truth_keys = slc_sig_full.data.truth.keys()
+                systems = _init_systems(specs, slc_data, truth_keys)
+
+            gen_sel = _get_values(slc_sel_sig, "genweight")
+            gen_bg = _get_values(slc_sel_bg, "genweight")
+            gen_sig_full = _get_values(slc_sig_full, "genweight")
+
+            for name, _bins, reco_key, true_key, _xsec in specs:
+                sys_obj = systems[name]
+                sys_obj.accumulate_cv_chunk(
+                    reco_sel=_get_values(slc_sel_sig, reco_key),
+                    reco_sel_background=_get_values(slc_sel_bg, reco_key),
+                    genweights_sel=gen_sel,
+                    genweights_sel_background=gen_bg,
+                    true_sig=_get_values(slc_sig_full, true_key) if true_key else None,
+                    true_sel=_get_values(slc_sel_sig, true_key) if true_key else None,
+                    true_sel_background=_get_values(slc_sel_bg, true_key) if true_key else None,
+                    genweights_sig=gen_sig_full,
+                )
+                sys_obj.process_systematics_chunk(
+                    slc_sig_full.data,
+                    slc_sel_sig.data,
+                    slc_sel_bg.data,
+                    sys_names=SLIM_KEYS,
+                )
+
+            del slc_chunk, slc_sig_full, slc_sel_sig, slc_sel_bg
 
         if not systems:
-            print(f"No events to process for {cut}, skipping")
+            print(f"No slim events after cuts for {cut}, skipping")
             continue
 
-        if cfg.runs_det:
-            _accumulate_shared_nominal_cv(
-                systems,
-                specs,
-                file_map,
-                norm,
-                cut_chain,
-                categories,
-                cfg,
-                aux_bases,
-                verbose,
-            )
+        for name, _bins, _reco_key, _true_key, _xsec in specs:
+            if name in systems:
+                systems[name].finalize_chunked_build()
+                _pin_slim_cv_sel(systems[name])
 
-            for name in systems:
+        _accumulate_shared_nominal_cv(
+            systems,
+            specs,
+            file_map,
+            norm,
+            cut_chain,
+            categories,
+            cfg,
+            aux_bases,
+            verbose,
+        )
+
+        for name, _bins, _reco_key, _true_key, _xsec in specs:
+            if name in systems:
                 _sync_cv_acc_from_promoted(systems[name])
                 systems[name].finalize_chunked_build()
 
-            _process_det_chunks(
+        _process_det_chunks(
+            systems,
+            specs,
+            file_map,
+            norm,
+            cut_chain,
+            categories,
+            cfg,
+            aux_bases,
+            pot_scaling,
+            verbose,
+        )
+
+        if cut in CALO_CUTS:
+            _process_calo_chunked(
                 systems,
                 specs,
+                cfg,
+                file_map,
+                norm,
+                cut_chain,
+                aux_bases,
+                categories,
+                verbose,
+            )
+
+        cut_universe_dir = f"{cfg.save_dir}/{cut}"
+
+        for name, bins, reco_key, _true_key, xsec in specs:
+            if name not in systems:
+                continue
+            _process_cosmic_chunked(
+                systems[name],
+                name,
+                bins,
+                reco_key,
+                xsec,
+                cfg,
                 file_map,
                 norm,
                 cut_chain,
                 categories,
-                cfg,
-                aux_bases,
-                pot_scaling,
+                slc_offbeam_data,
+                cut,
                 verbose,
             )
+            systems[name].save(cut_universe_dir, metadata_dir="metadata_detsys")
+            print(f"Saved {name} universes to {cut_universe_dir}")
 
-            if slcs_calo is not None and cut in CALO_CUTS:
-                _ensure_calo_systematics(systems)
-                _process_calo_systematics(systems, specs, slcs_calo, categories)
+        del slc_data, slc_lowe, slc_offbeam_data, systems
+        gc.collect()
 
-        if cfg.runs_cosmic:
-            for name, bins, reco_key, _true_key, xsec in specs:
-                if name not in systems:
-                    continue
-                _process_cosmic(
-                    systems[name],
-                    name,
-                    bins,
-                    reco_key,
-                    xsec,
-                    slc_nominal_sig,
-                    slc_offbeam_mc,
-                    slc_offbeam_data,
-                    cut,
-                    cfg,
-                )
-
-        if cfg.runs_slim and cfg.full_slim and not cfg.runs_det:
-            for name in systems:
-                systems[name].finalize_chunked_build()
-
-        cut_universe_dir = f"{cfg.save_dir}/{cut}"
-        _save_for_mode(systems, cut_universe_dir, cfg.save_build_mode)
-        if cfg.show_progress:
-            tqdm.write(f"Saved {cut} universes to {cut_universe_dir}")
-
-    if cfg.show_progress:
-        tqdm.write("Done building chunked universes.")
-    else:
-        print("Done building chunked universes.")
+    print("Done building chunked universes.")
     return 0
 
 

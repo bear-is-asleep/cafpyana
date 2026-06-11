@@ -135,7 +135,7 @@ def main() -> int:
         print(f"pot_scaling -> {pot_scaling_path(cfg)}")
         return 0
 
-    norm = compute_normalization(file_map, ncpu=cfg.ncpu)
+    norm = compute_normalization(file_map, mode=cfg.build_mode, ncpu=cfg.ncpu)
     build_event_lists(cfg, file_map, norm, only_var=args.var, dry_run=False)
     return 0
 

@@ -13,3 +13,4 @@ analysis_village/numuincl/sbnd
 analysis_village/numuincl/*.txt
 *.cursor
 analysis_village/numuincl/.agentchat
+analysis_village/numuincl/logs/

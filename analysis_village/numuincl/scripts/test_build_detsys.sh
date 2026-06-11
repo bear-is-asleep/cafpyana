@@ -1,0 +1,9 @@
+DAY=checkpoint7_full_test3
+# ncpu <= chunk-size; larger chunks = fewer det-var loops (RAM scales ~linearly with chunk-size)
+OPTS_DET="--ncpu 16 --chunk-size 40 --recompute-norm"
+OPTS_COSMIC="--ncpu 16 --chunk-size 20 --recompute-norm"
+OPTS_SLIM="--ncpu 16 --chunk-size 20 --recompute-norm"
+
+python scripts/build_detsys_universes.py --full-det-test    --day "$DAY" $OPTS_DET
+python scripts/build_detsys_universes.py --full-cosmic-test  --day "$DAY" $OPTS_COSMIC
+python scripts/build_detsys_universes.py --full-slim-test    --day "$DAY" $OPTS_SLIM

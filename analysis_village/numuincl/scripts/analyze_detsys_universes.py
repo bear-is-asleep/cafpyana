@@ -3,14 +3,17 @@ from __future__ import annotations
 
 import argparse
 import sys
+import warnings
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import numpy as np
 from tqdm import tqdm
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+SCRIPTS_DIR = Path(__file__).resolve().parent
 CAFPYANA_WD = REPO_ROOT.parents[1]
-for p in (str(REPO_ROOT), str(CAFPYANA_WD)):
+for p in (str(REPO_ROOT), str(SCRIPTS_DIR), str(CAFPYANA_WD)):
     if p not in sys.path:
         sys.path.insert(0, p)
 
@@ -20,7 +23,8 @@ sys.path.insert(0,SBNDANA_DIR)
 sys.path.insert(0,f'{SBNDANA_DIR.replace("/numuincl/sbnd","/numuincl")}')
 plt.style.use(f'{SBNDANA_DIR}/plotlibrary/numu2025.mplstyle')
 
-from detsys_config import DET_VARS_ALL, DetsysConfig, build_config
+from chi2_io import save_chi2_json
+from detsys_config import CALO_CUTS, CALO_VARS, DET_VARS_ALL, DetsysConfig, build_config
 from naming import INTERNAL_LABEL
 from sbnd.general import plotters
 from sbnd.stats.systematics import Systematics
@@ -32,6 +36,26 @@ LOAD_IGNORE_KEYS = IGNORE_KEYS | SUMMARY_BUCKET_KEYS
 AGGREGATE_SUMMARY_KEYS = frozenset({"total", "pds", "sce", "tpc", "calo"})
 SLIM_KEYS = ("xsec", "flux", "g4")
 RESTORE_SUMMARY_KEYS = frozenset({*SLIM_KEYS, "cosmic"})
+# CV-only keys: provide reference histograms for a syst, not an uncertainty themselves.
+CV_ONLY_KEYS = frozenset({"cosmic_data"})
+_COV_FIELDS = (
+    "event_cov",
+    "event_cov_unaltered",
+    "event_fraccov",
+    "event_fraccov_unaltered",
+    "event_corr",
+    "event_fracunc",
+    "event_totalunc",
+    "event_inv_cov",
+    "xsec_cov",
+    "xsec_cov_unaltered",
+    "xsec_fraccov",
+    "xsec_fraccov_unaltered",
+    "xsec_corr",
+    "xsec_fracunc",
+    "xsec_totalunc",
+    "xsec_inv_cov",
+)
 
 
 def _drop_stale_summaries(s: Systematics) -> None:
@@ -41,11 +65,43 @@ def _drop_stale_summaries(s: Systematics) -> None:
         if k in IGNORE_KEYS:
             s.systematics.pop(k, None)
             continue
-        if v.get("variation") == "self" and k != "cosmic_data":
+        if v.get("variation") == "self" and k not in CV_ONLY_KEYS:
             s.systematics.pop(k, None)
             continue
         if v.get("variation") == "summary" and k in AGGREGATE_SUMMARY_KEYS:
             s.systematics.pop(k, None)
+
+
+def _prepare_cosmic_key(s: Systematics) -> None:
+    """
+    cosmic uses cosmic_data for CV (nom signal + data offbeam).
+    The cosmic key only holds the MC-offbeam unisim universe histogram.
+    """
+    if "cosmic" not in s.systematics:
+        return
+    d = s.systematics["cosmic"]
+    d["type"] = "cosmic"
+    d["variation"] = d.get("variation") or "unisim"
+    sel = d.get("sel")
+    if isinstance(sel, np.ndarray):
+        if sel.ndim == 2:
+            d["sel"] = [row.copy() for row in sel]
+        else:
+            d["sel"] = [sel.copy()]
+    d["sel_background"] = []
+
+
+def _prepare_cv_only_keys(s: Systematics) -> None:
+    """cosmic_data is the cosmic CV stash only, never a covariance contributor."""
+    for k in CV_ONLY_KEYS:
+        if k not in s.systematics:
+            continue
+        d = s.systematics[k]
+        d["variation"] = "self"
+        if not d.get("type"):
+            d["type"] = "cosmic"
+        for field in _COV_FIELDS:
+            d[field] = None
 
 
 def _restore_slim_cosmic_keys(s: Systematics) -> None:
@@ -62,6 +118,10 @@ def _has_det_systematics(s: Systematics) -> bool:
     return any(k in s.systematics for k in DET_VARS_ALL)
 
 
+def _has_calo_systematics(s: Systematics) -> bool:
+    return any(k in s.systematics for k in CALO_VARS)
+
+
 def _flat_keys(cut: str, cfg: DetsysConfig) -> list[str]:
     keys = ["nt", "stat_flat"]
     if cut == cfg.cuts[-1]:
@@ -69,13 +129,32 @@ def _flat_keys(cut: str, cfg: DetsysConfig) -> list[str]:
     return keys
 
 
+def _clear_cov_fields(sys_dict: dict) -> None:
+    """Drop stale covariance products so flat keys are always recomputed."""
+    for field in _COV_FIELDS:
+        sys_dict[field] = None
+
+
 def _add_flat_systematics(s: Systematics, flat_keys: list[str]) -> None:
+    """Register nt / stat_flat / pot variations for every variable at this cut."""
     if "nt" in flat_keys:
+        if "nt" in s.systematics:
+            _clear_cov_fields(s.systematics["nt"])
         s.process_flat_systematic("nt", 0.01)
     if "stat_flat" in flat_keys:
+        if "stat_flat" in s.systematics:
+            _clear_cov_fields(s.systematics["stat_flat"])
         s.process_stat_systematics("stat_flat")
     if "pot" in flat_keys:
+        if "pot" in s.systematics:
+            _clear_cov_fields(s.systematics["pot"])
         s.process_flat_systematic("pot", 0.02)
+
+
+def _cov_proc_keys(s: Systematics, flat_keys: list[str]) -> list[str]:
+    """Universe keys whose covariances feed the total summary (incl. flat systs)."""
+    _add_flat_systematics(s, flat_keys)
+    return list(dict.fromkeys(_proc_keys(s) + flat_keys))
 
 
 def _summary_groups(s: Systematics, flat_keys: list[str]) -> tuple[list[str], list[str]]:
@@ -88,10 +167,7 @@ def _summary_groups(s: Systematics, flat_keys: list[str]) -> tuple[list[str], li
     types_present.discard(None)
 
     combine_keys: list[str] = ["total"]
-    summary_keys: list[str] = ["total"]
-
-    if _has_det_systematics(s):
-        summary_keys.extend(k for k in flat_keys if k not in summary_keys)
+    summary_keys: list[str] = ["total", *flat_keys]
 
     for k in SLIM_KEYS:
         if k in keys_present:
@@ -100,7 +176,7 @@ def _summary_groups(s: Systematics, flat_keys: list[str]) -> tuple[list[str], li
     if "cosmic" in keys_present:
         summary_keys.append("cosmic")
 
-    if "calo" in types_present or "calo" in keys_present:
+    if _has_calo_systematics(s) or "calo" in types_present or "calo" in keys_present:
         summary_keys.append("calo")
         combine_keys.append("calo")
     if "pds" in types_present:
@@ -119,7 +195,7 @@ def _summary_groups(s: Systematics, flat_keys: list[str]) -> tuple[list[str], li
 def _proc_keys(s: Systematics) -> list[str]:
     keys: list[str] = []
     for k, sys_dict in s.systematics.items():
-        if k in IGNORE_KEYS:
+        if k in IGNORE_KEYS or k in CV_ONLY_KEYS:
             continue
         if sys_dict.get("variation") == "self":
             continue
@@ -197,22 +273,35 @@ def main() -> int:
             )
             _drop_stale_summaries(sys_obj)
             _restore_slim_cosmic_keys(sys_obj)
+            _prepare_cosmic_key(sys_obj)
+            _prepare_cv_only_keys(sys_obj)
             systems.append(sys_obj)
 
         flat_keys = _flat_keys(cut, cfg)
         chi2_map = {}
         for s in tqdm(systems, desc=f"{cut} cov", unit="var"):
-            if _has_det_systematics(s):
-                _add_flat_systematics(s, flat_keys)
-            proc_keys = _proc_keys(s)
+            proc_keys = _cov_proc_keys(s, flat_keys)
             do_xsec_cov = (cut == cfg.cuts[-1]) and (s.variable_name in {"costheta", "momentum", "differential"})
             s.compute_covariances(keys=proc_keys, compute_xsec_cov=do_xsec_cov)
 
             combine_keys, summary_keys = _summary_groups(s, flat_keys)
+            if (
+                cut in CALO_CUTS
+                and _has_det_systematics(s)
+                and not _has_calo_systematics(s)
+                and "calo" not in combine_keys
+            ):
+                warnings.warn(
+                    f"CALO systematics missing for {s.variable_name} at cut {cut}; "
+                    f"calo summary will not be built. Re-run --full-det build "
+                    f"(CALO snapshots must persist from muon through cont).",
+                    stacklevel=2,
+                )
             s.combine_summaries(summary_keys=combine_keys)
-            s.compute_inverse_covariances()
+            inv_keys = list(dict.fromkeys(proc_keys + flat_keys + combine_keys))
+            s.compute_inverse_covariances(keys=inv_keys)
             # Keep the build universe tree clean: summaries live in memory for plots only.
-            s.save(save_dir=save_dir, metadata_dir="metadata_detsys", save_summaries=False)
+            s.save(save_dir=save_dir, metadata_dir="metadata_detsys", save_summaries=True)
             if s.sel_data is not None:
                 chi2_map[s.variable_name] = s._calc_chi2(keys=["total"], include_summary=True)
 
@@ -300,9 +389,12 @@ def main() -> int:
             plt.close("all")
 
         if chi2_map:
+            chi2_path = save_chi2_json(save_dir, chi2_map)
             print(f"Chi2 summary for cut {cut}:")
             for key, val in chi2_map.items():
                 print(f" - {key}: chi2={val['chi2']:.4f}, dof={val['dof']}")
+            if chi2_path:
+                print(f"Wrote chi2 to {chi2_path}")
 
     print("Done analyzing universes.")
     return 0

@@ -276,6 +276,12 @@ def make_pandora_evtdf(f, include_weights=None, wgt_types=["bnb","genie","g4"], 
         mudf.columns = pd.MultiIndex.from_tuples([tuple(["mu" + key_suffix] + list(c)) for c in mudf.columns])
         mudf_list.append(mudf)
 
+    # All score-cut PFPs in slice TPC-contained (cont_tpc0 | cont_tpc1)
+    trk_in_tpc = (trkdf.pfp.trk.cont_tpc0 | trkdf.pfp.trk.cont_tpc1).fillna(False)
+    slice_levels = list(range(trkdf.index.nlevels - 1))
+    all_pfps_cont = trk_in_tpc.groupby(level=slice_levels).all()
+    slcdf = multicol_add(slcdf, all_pfps_cont.rename(("slc", "all_pfps_cont")), default=False)
+
     mudf_concat = pd.concat(mudf_list, axis=1)
     slcdf = multicol_merge(slcdf, mudf_concat, left_index=True, right_index=True, how="left", validate="one_to_one")
     slcdf = multicol_merge(slcdf, hdr, left_index=True, right_index=True, how="left", validate="one_to_one")
@@ -494,12 +500,13 @@ def make_pandora_evtdf_processed(f, include_weights=None, wgt_types=["bnb","geni
         slc.data.loc[:,pe_col] = slc.data.loc[:,pe_col]*0.66 #prescale to match the data
     #Add cuts
     slc.cut_flashpe(cut=False,min_flashpe=2000,prescale=1.)
-    slc.cut_cosmic(cut=False,fmatch_score=0.06,use_opt0='barycenterFM')
+    slc.cut_cosmic(cut=False,fmatch_score=0.06,use_opt0='barycenterFM',use_isclearcosmic=False)
     slc.cut_flashmatch(cut=False,method='barycenterFM')
     slc.cut_fv(cut=False)
     slc.cut_muon(cut=False,min_ke=0.1)
     slc.cut_lowz(cut=False,z_max=6,include_start=True)
     slc.cut_is_cont(cut=False)
+    slc.cut_all_cont(cut=False)
     slc.cut_all(cut=False) #Add the all cut column
     
 
