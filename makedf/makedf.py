@@ -64,9 +64,28 @@ def make_mcnuwgtdf(f):
     return make_mcnudf(f, include_weights=True, multisim_nuniv=1000)
 
 def make_mcnuwgtdf_slim(f):
-    return make_mcnudf(f, include_weights=True, multisim_nuniv=1000, slim=True)
+    return make_mcnudf(
+        f,
+        include_weights=True,
+        multisim_nuniv=1000,
+        genie_multisim_nuniv=100,
+        flux_multisim_nuniv=100,
+        slim=True,
+    )
 
-def make_mcnudf(f, include_weights=False, multisim_nuniv=250, wgt_types=["bnb","genie"], slim=False, **kwargs):
+def make_mcnudf(
+    f,
+    include_weights=False,
+    multisim_nuniv=250,
+    genie_multisim_nuniv=100,
+    flux_multisim_nuniv=None,
+    wgt_types=["bnb", "genie"],
+    slim=False,
+    genie_systematics=None,
+    **kwargs,
+):
+    if flux_multisim_nuniv is None:
+        flux_multisim_nuniv = 100 if slim else multisim_nuniv
     # ----- sbnd or icarus? -----
     det = loadbranches(f["recTree"], ["rec.hdr.det"]).rec.hdr.det
     if (1 == det.unique()):
@@ -86,10 +105,18 @@ def make_mcnudf(f, include_weights=False, multisim_nuniv=250, wgt_types=["bnb","
             elif det == "SBND":
                 df_list = []
                 if "bnb" in wgt_types:
-                    bnbwgtdf = bnbsyst.bnbsyst(f, mcdf.ind, multisim_nuniv=multisim_nuniv, slim=slim)
+                    bnbwgtdf = bnbsyst.bnbsyst(
+                        f, mcdf.ind, multisim_nuniv=flux_multisim_nuniv, slim=slim
+                    )
                     df_list.append(bnbwgtdf)
                 if "genie" in wgt_types:
-                    geniewgtdf = geniesyst.geniesyst(f, mcdf.ind, slim=slim)
+                    geniewgtdf = geniesyst.geniesyst(
+                        f,
+                        mcdf.ind,
+                        multisim_nuniv=genie_multisim_nuniv,
+                        slim=slim,
+                        systematics=genie_systematics,
+                    )
                     df_list.append(geniewgtdf)
                 if "g4" in wgt_types:
                     g4wgtdf = g4syst.g4syst(f, mcdf.ind, slim=slim)

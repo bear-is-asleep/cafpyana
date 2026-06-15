@@ -1,6 +1,6 @@
+# GENIE slim: mc_syst/v9 (full AR23+ knobs, MvA ZExp, per-knob multisigma)
 input_dir: /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/mc_syst/v8
-#output_dir: /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/mc_syst/v8
-output_dir: /pnfs/sbnd/scratch/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/mc_syst/v8
+output_dir: /pnfs/sbnd/scratch/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/mc_syst/v9
 
 jobs:
   - name: slimsyst_nocuts_norecomb
@@ -21,7 +21,7 @@ jobs:
       VERBOSE: false
       ADD_STAT_UNC: true
     args:
-      ngrid: 3000
+      ngrid: 3500
       ncpu: -1
       nfile: -1
       memory: 6

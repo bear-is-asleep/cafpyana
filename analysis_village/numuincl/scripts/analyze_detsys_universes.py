@@ -24,17 +24,17 @@ sys.path.insert(0,f'{SBNDANA_DIR.replace("/numuincl/sbnd","/numuincl")}')
 plt.style.use(f'{SBNDANA_DIR}/plotlibrary/numu2025.mplstyle')
 
 from chi2_io import save_chi2_json
-from detsys_config import CALO_CUTS, CALO_VARS, DET_VARS_ALL, DetsysConfig, build_config
+from detsys_config import CUTS_FROM_MUON, CALO_VARS, DET_VARS_ALL, DetsysConfig, build_config
 from naming import INTERNAL_LABEL
 from sbnd.general import plotters
 from sbnd.stats.systematics import Systematics
 
 # Stale combined buckets written by old analyze/notebook saves; must not reload from disk or sys_dict.
-SUMMARY_BUCKET_KEYS = frozenset({"total", "pds", "sce", "tpc", "calo"})
+SLIM_KEYS = ("xsec", "flux", "g4")
+SUMMARY_BUCKET_KEYS = frozenset({"total", "pds", "sce", "tpc", "calo", *SLIM_KEYS})
 IGNORE_KEYS = frozenset({"metadata_detsys", "geant4_syst", "detsys"})
 LOAD_IGNORE_KEYS = IGNORE_KEYS | SUMMARY_BUCKET_KEYS
 AGGREGATE_SUMMARY_KEYS = frozenset({"total", "pds", "sce", "tpc", "calo"})
-SLIM_KEYS = ("xsec", "flux", "g4")
 RESTORE_SUMMARY_KEYS = frozenset({*SLIM_KEYS, "cosmic"})
 # CV-only keys: provide reference histograms for a syst, not an uncertainty themselves.
 CV_ONLY_KEYS = frozenset({"cosmic_data"})
@@ -60,16 +60,32 @@ _COV_FIELDS = (
 
 def _drop_stale_summaries(s: Systematics) -> None:
     """Drop combined summary buckets and CV stash keys, not slim/cosmic universes."""
+    stale_buckets = AGGREGATE_SUMMARY_KEYS | frozenset(SLIM_KEYS)
     for k in list(s.systematics.keys()):
         v = s.systematics[k]
-        if k in IGNORE_KEYS:
+        if k in IGNORE_KEYS or k in stale_buckets:
             s.systematics.pop(k, None)
             continue
         if v.get("variation") == "self" and k not in CV_ONLY_KEYS:
             s.systematics.pop(k, None)
             continue
-        if v.get("variation") == "summary" and k in AGGREGATE_SUMMARY_KEYS:
-            s.systematics.pop(k, None)
+
+
+def _ensure_slim_universe_types(s: Systematics) -> None:
+    """Bundled slim keys must carry type=xsec|flux|g4 for combine_summaries roll-up."""
+    type_by_key = {
+        "xsec_slim": "xsec",
+        "xsec_multisigma": "xsec",
+        "flux": "flux",
+        "g4": "g4",
+    }
+    for k, sd in s.systematics.items():
+        if sd.get("variation") in ("summary", "self"):
+            continue
+        if k in type_by_key:
+            sd["type"] = type_by_key[k]
+        elif sd.get("type") in (None, "", "unknown") and k.startswith("ZExp"):
+            sd["type"] = "xsec"
 
 
 def _prepare_cosmic_key(s: Systematics) -> None:
@@ -122,9 +138,10 @@ def _has_calo_systematics(s: Systematics) -> bool:
     return any(k in s.systematics for k in CALO_VARS)
 
 
-def _flat_keys(cut: str, cfg: DetsysConfig) -> list[str]:
+def _flat_keys(cut: str, cfg: DetsysConfig, *, analyze_cut: str | None) -> list[str]:
     keys = ["nt", "stat_flat"]
-    if cut == cfg.cuts[-1]:
+    is_final_stage = analyze_cut is not None or cut == cfg.cuts[-1]
+    if is_final_stage:
         return ["pot", *keys]
     return keys
 
@@ -157,6 +174,39 @@ def _cov_proc_keys(s: Systematics, flat_keys: list[str]) -> list[str]:
     return list(dict.fromkeys(_proc_keys(s) + flat_keys))
 
 
+def _slim_summary_keys(s: Systematics) -> list[str]:
+    """Slim summary keys; xsec rolls up xsec_slim, xsec_multisigma, ZExp via type=xsec."""
+    keys_present = set(s.systematics.keys())
+    types_present = {
+        sd.get("type")
+        for sd in s.systematics.values()
+        if sd.get("variation") not in ("summary", "self")
+    }
+    types_present.discard(None)
+    out: list[str] = []
+    for sk in SLIM_KEYS:
+        if sk in keys_present or sk in types_present:
+            out.append(sk)
+            continue
+        if sk == "xsec" and any(k in keys_present for k in ("xsec_slim", "xsec_multisigma")):
+            out.append(sk)
+        elif sk == "flux" and "flux" in keys_present:
+            out.append(sk)
+        elif sk == "g4" and "g4" in keys_present:
+            out.append(sk)
+    return out
+
+
+def _summary_plot_keys(s: Systematics, flat_keys: list[str]) -> list[str]:
+    """Summary buckets with computed event_totalunc (post combine_summaries)."""
+    _, candidates = _summary_groups(s, flat_keys)
+    return [
+        k
+        for k in candidates
+        if s.systematics.get(k, {}).get("event_totalunc") is not None
+    ]
+
+
 def _summary_groups(s: Systematics, flat_keys: list[str]) -> tuple[list[str], list[str]]:
     """
     Match detsys.ipynb step 7: combine_keys only has total + det type groups;
@@ -169,9 +219,7 @@ def _summary_groups(s: Systematics, flat_keys: list[str]) -> tuple[list[str], li
     combine_keys: list[str] = ["total"]
     summary_keys: list[str] = ["total", *flat_keys]
 
-    for k in SLIM_KEYS:
-        if k in keys_present:
-            summary_keys.append(k)
+    summary_keys.extend(_slim_summary_keys(s))
 
     if "cosmic" in keys_present:
         summary_keys.append("cosmic")
@@ -243,7 +291,7 @@ def main() -> int:
         default=False,
         help="Plot covariance/correlation matrices under twod/.",
     )
-    parser.add_argument("--ncpu", type=int, default=1, help="Workers for loading saved systematics (use 1 on small nodes).")
+    parser.add_argument("--ncpu", type=int, default=16, help="Workers for loading saved systematics (use 1 on small nodes).")
     args = parser.parse_args()
 
     cfg = build_config(day=args.day, ncpu=args.ncpu)
@@ -272,21 +320,25 @@ def main() -> int:
                 lite=False,
             )
             _drop_stale_summaries(sys_obj)
+            _ensure_slim_universe_types(sys_obj)
             _restore_slim_cosmic_keys(sys_obj)
             _prepare_cosmic_key(sys_obj)
             _prepare_cv_only_keys(sys_obj)
             systems.append(sys_obj)
 
-        flat_keys = _flat_keys(cut, cfg)
+        flat_keys = _flat_keys(cut, cfg, analyze_cut=args.cut)
         chi2_map = {}
+        is_final_stage = args.cut is not None or cut == cfg.cuts[-1]
         for s in tqdm(systems, desc=f"{cut} cov", unit="var"):
             proc_keys = _cov_proc_keys(s, flat_keys)
-            do_xsec_cov = (cut == cfg.cuts[-1]) and (s.variable_name in {"costheta", "momentum", "differential"})
+            do_xsec_cov = is_final_stage and (
+                s.variable_name in {"costheta", "momentum", "differential"}
+            )
             s.compute_covariances(keys=proc_keys, compute_xsec_cov=do_xsec_cov)
 
             combine_keys, summary_keys = _summary_groups(s, flat_keys)
             if (
-                cut in CALO_CUTS
+                cut in CUTS_FROM_MUON
                 and _has_det_systematics(s)
                 and not _has_calo_systematics(s)
                 and "calo" not in combine_keys
@@ -297,8 +349,11 @@ def main() -> int:
                     f"(CALO snapshots must persist from muon through cont).",
                     stacklevel=2,
                 )
-            s.combine_summaries(summary_keys=combine_keys)
-            inv_keys = list(dict.fromkeys(proc_keys + flat_keys + combine_keys))
+            slim_summaries = _slim_summary_keys(s)
+            combine_all = list(dict.fromkeys(combine_keys + slim_summaries))
+            s.combine_summaries(summary_keys=combine_all)
+            summary_plot_keys = _summary_plot_keys(s, flat_keys)
+            inv_keys = list(dict.fromkeys(proc_keys + flat_keys + combine_all))
             s.compute_inverse_covariances(keys=inv_keys)
             # Keep the build universe tree clean: summaries live in memory for plots only.
             s.save(save_dir=save_dir, metadata_dir="metadata_detsys", save_summaries=True)
@@ -310,7 +365,7 @@ def main() -> int:
             s.xlabel = s._get_default_xlabel()
             suffix = f"_{cut}cut"
             s.set_colors()
-            for unc_type in ("event", "xsec"):
+            for unc_type in ("event",):
                 if unc_type == "xsec" and s.variable_name not in {"costheta", "momentum", "differential"}:
                     continue
                 for use_fracunc in (True, False):
@@ -321,6 +376,8 @@ def main() -> int:
                         use_fracunc=use_fracunc,
                         sort=True,
                     )
+                    if ax is None:
+                        continue
                     plotters.add_label(
                         ax,
                         INTERNAL_LABEL,
@@ -337,10 +394,12 @@ def main() -> int:
 
                     fig, ax, _ = s.plot_event_rate_errs(
                         unc_type,
-                        include_keys=summary_keys,
+                        include_keys=summary_plot_keys,
                         use_fracunc=use_fracunc,
                         sort=True,
                     )
+                    if ax is None:
+                        continue
                     plotters.add_label(
                         ax,
                         INTERNAL_LABEL,

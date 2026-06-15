@@ -43,6 +43,7 @@ from detsys_config import (
 )
 from detsys_det_match import (
     filter_slice_to_events,
+    load_nominal_common_events,
     load_variation_events,
     require_artifacts,
 )
@@ -417,7 +418,7 @@ def _accumulate_shared_nominal_cv(
 
     nom_fnames = file_map["MC_NOMINAL_FNAMES"]
     base_pot_nom = float(norm["POT_NOMINAL"])
-    events = load_variation_events(cfg, ref_var)
+    events = load_nominal_common_events(cfg, ref_var)
     systems_cv = _init_det_var_systems(specs, ref_var)
 
     file_base = 0

@@ -66,7 +66,7 @@ def make_spine_evtdf_wgt(f,include_weights=None, wgt_types=["bnb","genie"],preli
     include_weights = _resolve_flag(include_weights, INCLUDE_WEIGHTS)
     prelim_cuts = _resolve_flag(prelim_cuts, PRELIM_CUTS)
     slim = _resolve_flag(slim, SLIM)
-    multisim_nuniv = 100 if slim else 1000
+    multisim_nuniv = 1000
     # ----- sbnd or icarus? -----
     det = loadbranches(f["recTree"], ["rec.hdr.det"]).rec.hdr.det
     if (1 == det.unique()):
@@ -147,7 +147,9 @@ def make_pandora_evtdf(f, include_weights=None, wgt_types=["bnb","genie","g4"], 
                        return_mcdf=False, **trkArgs):
     include_weights = _resolve_flag(include_weights, INCLUDE_WEIGHTS)
     slim = _resolve_flag(slim, SLIM)
-    multisim_nuniv = 100 if slim else 1000
+    multisim_nuniv = 1000
+    genie_multisim_nuniv = 100
+    flux_multisim_nuniv = 100 if slim else multisim_nuniv
     updaterecomb = _resolve_flag(updaterecomb, UPDATE_RECOMB)
     trkScoreCut = _resolve_flag(trkScoreCut, TRK_CUTS)
     # ----- sbnd or icarus? -----
@@ -158,7 +160,15 @@ def make_pandora_evtdf(f, include_weights=None, wgt_types=["bnb","genie","g4"], 
         DETECTOR = "ICARUS"
     #assert DETECTOR == "SBND", f'Detector is {DETECTOR}'
     
-    mcdf = make_mcnudf(f, include_weights=include_weights,  wgt_types=wgt_types, slim=slim, multisim_nuniv=multisim_nuniv)
+    mcdf = make_mcnudf(
+        f,
+        include_weights=include_weights,
+        wgt_types=wgt_types,
+        slim=slim,
+        multisim_nuniv=multisim_nuniv,
+        genie_multisim_nuniv=genie_multisim_nuniv,
+        flux_multisim_nuniv=flux_multisim_nuniv,
+    )
     if return_mcdf: ret_mcdf = mcdf.copy() #Make a copy to return
     mcdf.columns = pd.MultiIndex.from_tuples([tuple(["truth"] + list(c)) for c in mcdf.columns])
     trkdf = make_custom_trkdf(f, trkScoreCut=trkScoreCut, updaterecomb=updaterecomb, **trkArgs)
@@ -530,7 +540,6 @@ def make_pandora_evtdf_processed_signal_cut(f, include_weights=None, wgt_types=[
     """
     include_weights = _resolve_flag(include_weights, INCLUDE_WEIGHTS)
     slim = _resolve_flag(slim, SLIM)
-    multisim_nuniv = 100 if slim else 1000
     updaterecomb = _resolve_flag(updaterecomb, UPDATE_RECOMB)
     df = make_pandora_evtdf_processed(f, include_weights=include_weights,  wgt_types=wgt_types, slim=slim, 
                             trkScoreCut=trkScoreCut, updaterecomb=updaterecomb, **trkArgs)
@@ -559,7 +568,6 @@ def make_pandora_evtdf_processed_selected_cut(f, include_weights=None, wgt_types
     """
     include_weights = _resolve_flag(include_weights, INCLUDE_WEIGHTS)
     slim = _resolve_flag(slim, SLIM)
-    multisim_nuniv = 100 if slim else 1000
     updaterecomb = _resolve_flag(updaterecomb, UPDATE_RECOMB)
     df = make_pandora_evtdf_processed(f, include_weights=include_weights,  wgt_types=wgt_types, slim=slim, 
                             trkScoreCut=trkScoreCut, updaterecomb=updaterecomb, **trkArgs)

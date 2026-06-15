@@ -10,7 +10,8 @@ def getsyst(f, systematics, nuind, multisim_nuniv=100, slim=False, slimname="sli
     nuidx = pd.MultiIndex.from_arrays([nuind.index.get_level_values(0), nuind])
 
     if slim:
-        # one column to save them all
+        # ``(slimname, univ_i)``: product of true multisim knobs only. Multisigma / morph
+        # stay as per-knob ``ps*`` / ``ms*`` / ``morph`` columns (concatenated at return).
         cols = pd.MultiIndex.from_product(
             [[slimname], [f"univ_{i}" for i in range(multisim_nuniv)]],
         )
@@ -46,17 +47,7 @@ def getsyst(f, systematics, nuind, multisim_nuniv=100, slim=False, slimname="sli
         if wgt_types[isyst] == 3 and wgt_nuniv[isyst] == 1: # morph unisim
             s_morph = wgts[wgts.isyst == isyst].wgt.groupby(level=[0,1]).first()
             s_morph.name = (s, "morph")
-
-            if slim:
-                for i in range(multisim_nuniv):
-                    seed_input = s + str(i) + str(id(f))
-                    np.random.seed(hash(seed_input) % (2**32))
-                    wgt = 1 + (s_morph - 1) * 2 * np.abs(np.random.normal(0, 1)) # std -> unc.
-                    wgt = np.maximum(wgt, 0)
-                    systs_slim[(slimname, f"univ_{i}")] = systs_slim[(slimname, f"univ_{i}")].values * wgt
-
-            else:
-                this_systs.append(s_morph)
+            this_systs.append(s_morph)
 
         elif wgt_types[isyst] == 3 and wgt_nuniv[isyst] > 1: # +/- sigma unisim
             nwgt = wgts[wgts.isyst == isyst].wgt.groupby(level=[0,1]).size().values[0]
@@ -67,18 +58,8 @@ def getsyst(f, systematics, nuind, multisim_nuniv=100, slim=False, slimname="sli
                 s_ms = wgts[wgts.isyst == isyst].wgt.groupby(level=[0,1]).nth(2*isigma+1)
                 s_ms.name = (s, "ms%i" % (isigma+1))
 
-                if slim and isigma == 0: # use ps1
-                    for i in range(multisim_nuniv):
-                        seed_input = s + str(i) + str(id(f))
-                        np.random.seed(hash(seed_input) % (2**32))
-                        wgt = 1 + (s_ps - 1) * np.random.normal(0, 1)
-                        wgt = np.maximum(wgt, 0)
-                        wgt = wgt.reset_index(level=2, drop=True)  # Drop the 'iwgt' level to match systs_slim index
-                        systs_slim[(slimname, f"univ_{i}")] = systs_slim[(slimname, f"univ_{i}")].values * wgt
-    
-                else:
-                    this_systs.append(s_ps.droplevel(2))
-                    this_systs.append(s_ms.droplevel(2))
+                this_systs.append(s_ps.droplevel(2))
+                this_systs.append(s_ms.droplevel(2))
             # check if we also saved the 0-sigma weight. This is conventionally put last
             if nwgt % 2 != 0:
                 s_cv = wgts[wgts.isyst == isyst].wgt.groupby(level=[0,1]).nth(nwgt-1)
@@ -96,10 +77,14 @@ def getsyst(f, systematics, nuind, multisim_nuniv=100, slim=False, slimname="sli
 
             if slim:
                 for i in range(multisim_nuniv):
-                    systs_slim[(slimname, f"univ_{i}")] = systs_slim[(slimname, f"univ_{i}")].values * this_wgts[(s, f"univ_{i}")]
-
-            for c in this_wgts.columns:
-                this_systs.append(this_wgts[c])
+                    col = (s, f"univ_{i}")
+                    if col in this_wgts.columns:
+                        systs_slim[(slimname, f"univ_{i}")] = (
+                            systs_slim[(slimname, f"univ_{i}")].values * this_wgts[col]
+                        )
+            else:
+                for c in this_wgts.columns:
+                    this_systs.append(this_wgts[c])
 
         else:
             raise Exception("Cannot decode systematic uncertainty: %s" % s)
@@ -109,8 +94,15 @@ def getsyst(f, systematics, nuind, multisim_nuniv=100, slim=False, slimname="sli
 
     if slim:
         s_idx = systs_slim.index.get_indexer(nuidx)
-        systs_slim.loc[s_idx < 0, :] = 1.
+        systs_slim.loc[s_idx < 0, :] = 1.0
         systs_slim.index = nuind.index
+        if systs:
+            extras = pd.DataFrame(systs).T
+            e_idx = extras.index.get_indexer(nuidx)
+            extras_match = extras.iloc[e_idx]
+            extras_match.loc[e_idx < 0, :] = 1.0
+            extras_match.index = nuind.index
+            return pd.concat([systs_slim, extras_match], axis=1)
         return systs_slim
 
     else:

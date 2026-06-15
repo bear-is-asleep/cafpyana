@@ -1,6 +1,6 @@
 input_dir: /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/det_var/sce
-#output_dir: /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/det_var/sce/v8
-output_dir: /pnfs/sbnd/scratch/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/det_var/sce/v8
+#output_dir: /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/det_var/sce/v9
+output_dir: /pnfs/sbnd/scratch/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/det_var/sce/v9
 
 jobs:
   - name: nosyst_nocuts_recomb

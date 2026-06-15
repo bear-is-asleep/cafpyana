@@ -16,11 +16,12 @@ if TYPE_CHECKING:
     from sbnd.cafclasses.parent import CAF
     from sbnd.cafclasses.slice import CAFSlice
 
-# Same step as sbnd.general.utils.offset_ntuple_index / CAF._load_combined file_idx.
-NTUPLE_FILE_STEP = 1000
 OFFBEAM_COMBINE_OFFSET = int(1e7)
 
-EVENT_CSV_COLUMNS = ["file_index", "__ntuple", "entry"]
+# Match mcnu on physics ID (detsys.ipynb); filter slices on index keys.
+PHYSICS_MATCH_COLUMNS = ["run", "subrun", "evt", "E"]
+EVENT_CSV_COLUMNS = ["__ntuple", "entry"]
+NOMINAL_ALL_ENTRIES_NAME = "nominal_ntuple_entries.csv"
 
 
 def det_var_subdir(var: str) -> str:
@@ -36,6 +37,21 @@ def det_var_subdir(var: str) -> str:
 def runs_csv_path(cfg: DetsysConfig, var: str) -> Path:
     subdir = det_var_subdir(var)
     return Path(cfg.data_dir) / "det_var" / subdir / cfg.version / f"{var}_runs.csv"
+
+
+def nominal_runs_csv_path(cfg: DetsysConfig, var: str) -> Path:
+    subdir = det_var_subdir(var)
+    return (
+        Path(cfg.data_dir)
+        / "det_var"
+        / subdir
+        / cfg.version
+        / f"{var}_nominal_runs.csv"
+    )
+
+
+def nominal_all_entries_path(cfg: DetsysConfig) -> Path:
+    return Path(cfg.data_dir) / "det_var" / cfg.version / NOMINAL_ALL_ENTRIES_NAME
 
 
 def pot_scaling_path(cfg: DetsysConfig) -> Path:
@@ -64,45 +80,18 @@ def _index_level_values(index: pd.Index, name: str) -> np.ndarray:
     return index.get_level_values(name).to_numpy(dtype=np.int64)
 
 
-def _triple_frame_from_index(index: pd.Index) -> pd.DataFrame:
-    ntuple = _index_level_values(index, "__ntuple")
-    entry = _index_level_values(index, "entry")
-    file_index = ntuple // NTUPLE_FILE_STEP
+def _index_frame_from_mcnu_index(index: pd.Index) -> pd.DataFrame:
     return pd.DataFrame(
         {
-            "file_index": file_index.astype(np.int64),
-            "__ntuple": ntuple.astype(np.int64),
-            "entry": entry.astype(np.int64),
+            "__ntuple": _index_level_values(index, "__ntuple").astype(np.int64),
+            "entry": _index_level_values(index, "entry").astype(np.int64),
         }
     )
-
-
-def _dedupe_triple_frame(triple: pd.DataFrame) -> pd.DataFrame:
-    len_before = len(triple)
-    out = triple.drop_duplicates(subset=EVENT_CSV_COLUMNS, keep="first")
-    len_after = len(out)
-    if len_before != len_after:
-        print(f"Dropped {len_before - len_after} duplicate triple-key rows")
-    return out.reset_index(drop=True)
-
-
-def _mcnu_triple_frame(mcnu: NU) -> pd.DataFrame:
-    return _dedupe_triple_frame(_triple_frame_from_index(mcnu.data.index))
 
 
 def _mc_row_mask(index: pd.Index) -> np.ndarray:
     ntuple = _index_level_values(index, "__ntuple")
     return ntuple < OFFBEAM_COMBINE_OFFSET
-
-
-def _slice_triple_frame(slc: CAFSlice) -> pd.DataFrame:
-    index = slc.data.index
-    mc_mask = _mc_row_mask(index)
-    if not mc_mask.any():
-        return pd.DataFrame(columns=EVENT_CSV_COLUMNS)
-    triple = _triple_frame_from_index(index[mc_mask])
-    triple["_row"] = np.flatnonzero(mc_mask)
-    return triple
 
 
 def _hdr_event_column_names(hdr: CAF) -> tuple[str, str, str]:
@@ -116,9 +105,7 @@ def _hdr_event_column_names(hdr: CAF) -> tuple[str, str, str]:
 
 
 def _attach_hdr_columns(mcnu: NU, hdr: CAF) -> None:
-    """
-    Attach hdr run/subrun/evt to each mcnu row (optional logging / legacy checks).
-    """
+    """Attach hdr run/subrun/evt to each mcnu row."""
     run_col, subrun_col, evt_col = _hdr_event_column_names(hdr)
     hdr_event = hdr.data[[run_col, subrun_col, evt_col]]
 
@@ -166,24 +153,72 @@ def _attach_hdr_columns(mcnu: NU, hdr: CAF) -> None:
     )
 
 
-def prepare_mcnu_event_index(mcnu: NU, hdr: CAF) -> NU:
-    """
-    Build unique (file_index, __ntuple, entry) keys from mcnu index.
+def _physics_column_names(mcnu: NU) -> tuple[Any, Any, Any, Any]:
+    for col in ("run", "subrun", "evt"):
+        if col not in mcnu.data.columns:
+            raise ValueError(
+                f"mcnu missing hdr column {col!r}; attach hdr before physics match"
+            )
+    e_col = mcnu.get_key("E")[0]
+    return "run", "subrun", "evt", e_col
 
-    hdr is accepted for API compatibility; matching uses index triples only.
-    Returns a shallow NU copy whose data holds one row per unique triple.
-    """
-    m = mcnu.copy(deep=True)
+
+def _dedupe_physics_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    len_before = len(frame)
+    out = frame.drop_duplicates(subset=PHYSICS_MATCH_COLUMNS, keep="first")
+    len_after = len(out)
+    if len_before != len_after:
+        print(f"Dropped {len_before - len_after} duplicate physics-key rows")
+    return out.reset_index(drop=True)
+
+
+def _mcnu_physics_frame(mcnu: NU, hdr: CAF) -> pd.DataFrame:
+    m = mcnu.copy(deep=False)
     if len(hdr.data) > 0:
         _attach_hdr_columns(m, hdr)
-    triple = _mcnu_triple_frame(m)
+    run_col, subrun_col, evt_col, e_col = _physics_column_names(m)
+    frame = pd.DataFrame(
+        {
+            "run": m.data[run_col].to_numpy(dtype=np.int64),
+            "subrun": m.data[subrun_col].to_numpy(dtype=np.int64),
+            "evt": m.data[evt_col].to_numpy(dtype=np.int64),
+            "E": np.round(m.data[e_col].to_numpy(dtype=float), 6),
+            "__ntuple": _index_level_values(m.data.index, "__ntuple").astype(np.int64),
+            "entry": _index_level_values(m.data.index, "entry").astype(np.int64),
+        }
+    )
+    return _dedupe_physics_frame(frame)
+
+
+def nominal_ntuple_entries_frame(mcnu: NU) -> pd.DataFrame:
+    """All unique nominal (__ntuple, entry) keys (no physics dedupe)."""
+    frame = _index_frame_from_mcnu_index(mcnu.data.index)
+    len_before = len(frame)
+    out = frame.drop_duplicates(subset=EVENT_CSV_COLUMNS, keep="first")
+    len_after = len(out)
+    if len_before != len_after:
+        print(f"Dropped {len_before - len_after} duplicate nominal index-key rows")
+    return out.reset_index(drop=True)
+
+
+def prepare_mcnu_event_index(mcnu: NU, hdr: CAF) -> NU:
+    """One row per unique physics key with (__ntuple, entry) attached."""
     out = mcnu.copy(deep=False)
-    out.data = triple
+    out.data = _mcnu_physics_frame(mcnu, hdr)
     return out
 
 
 def mcnu_indexed_event_counts(mcnu: NU, hdr: CAF) -> int:
-    return len(prepare_mcnu_event_index(mcnu, hdr).data)
+    return len(_mcnu_physics_frame(mcnu, hdr))
+
+
+def _index_events_from_common(common: pd.DataFrame, suffix: str) -> pd.DataFrame:
+    ntuple_col = f"__ntuple{suffix}"
+    entry_col = f"entry{suffix}"
+    out = common[[ntuple_col, entry_col]].rename(
+        columns={ntuple_col: "__ntuple", entry_col: "entry"}
+    )
+    return out.drop_duplicates(subset=EVENT_CSV_COLUMNS).reset_index(drop=True)
 
 
 def pairwise_common_events(
@@ -191,24 +226,31 @@ def pairwise_common_events(
     nom_hdr: CAF,
     var_mcnu: NU,
     var_hdr: CAF,
-) -> tuple[pd.DataFrame, int, int, int]:
+) -> tuple[pd.DataFrame, pd.DataFrame, int, int, int]:
     """
-    Pairwise intersection of nominal and variation mcnu on (file_index, __ntuple, entry).
+    Intersect nominal and variation mcnu on (run, subrun, evt, E).
 
-    Returns (events_df, n_nominal, n_variation, n_common).
+    Returns (var_events_df, nom_events_df, n_nominal, n_variation, n_common).
+    Each events_df holds (__ntuple, entry) in that sample's load index.
     """
-    nom_triple = _mcnu_triple_frame(nom_mcnu)
-    var_triple = _mcnu_triple_frame(var_mcnu)
-    n_nominal = len(nom_triple)
-    n_variation = len(var_triple)
-    common = nom_triple.merge(var_triple, on=EVENT_CSV_COLUMNS, how="inner")
+    nom_events = _mcnu_physics_frame(nom_mcnu, nom_hdr)
+    var_events = _mcnu_physics_frame(var_mcnu, var_hdr)
+    n_nominal = len(nom_events)
+    n_variation = len(var_events)
+    common = nom_events.merge(
+        var_events,
+        on=PHYSICS_MATCH_COLUMNS,
+        how="inner",
+        suffixes=("_nom", "_var"),
+    )
     n_common = len(common)
     if n_common == 0:
         raise ValueError(
             f"No common mcnu events (nominal={n_nominal}, variation={n_variation})"
         )
-    events_df = common[EVENT_CSV_COLUMNS].copy()
-    return events_df, n_nominal, n_variation, n_common
+    var_index_df = _index_events_from_common(common, "_var")
+    nom_index_df = _index_events_from_common(common, "_nom")
+    return var_index_df, nom_index_df, n_nominal, n_variation, n_common
 
 
 def write_runs_csv(events_df: pd.DataFrame, path: Path) -> None:
@@ -225,6 +267,7 @@ def build_variation_scaling_entry(
     pot_nominal_full: float,
     pot_det_full: float,
     runs_csv: str,
+    nominal_runs_csv: str,
 ) -> dict[str, Any]:
     event_ratio_nominal = n_common / n_nominal if n_nominal else 0.0
     event_ratio_var = n_common / n_variation if n_variation else 0.0
@@ -240,6 +283,7 @@ def build_variation_scaling_entry(
         "POT_DET_FULL": pot_det_full,
         "POT_DET_SCALED": pot_det_full * event_ratio_var,
         "runs_csv": runs_csv,
+        "nominal_runs_csv": nominal_runs_csv,
     }
 
 
@@ -261,8 +305,7 @@ def load_pot_scaling(cfg: DetsysConfig) -> dict[str, Any]:
         return json.load(f)
 
 
-def load_variation_events(cfg: DetsysConfig, var: str) -> pd.DataFrame:
-    path = runs_csv_path(cfg, var)
+def _load_index_events_csv(path: Path) -> pd.DataFrame:
     if not path.is_file():
         raise FileNotFoundError(
             f"Missing {path}; run scripts/build_det_event_lists.py first"
@@ -276,32 +319,34 @@ def load_variation_events(cfg: DetsysConfig, var: str) -> pd.DataFrame:
     return df
 
 
-def _slice_col(slc: CAFSlice, key: str) -> Any:
-    """Resolve a dotted CAF column key to the dataframe column tuple."""
-    return slc.get_key(key)[0]
+def load_variation_events(cfg: DetsysConfig, var: str) -> pd.DataFrame:
+    return _load_index_events_csv(runs_csv_path(cfg, var))
 
 
-def _slice_event_columns(slc: CAFSlice) -> tuple[Any, Any, Any, Any]:
-    """Run/subrun/evt/truth.E columns for debug logging only."""
-    return (
-        _slice_col(slc, "run"),
-        _slice_col(slc, "subrun"),
-        _slice_col(slc, "evt"),
-        _slice_col(slc, "truth.E"),
-    )
+def load_nominal_common_events(cfg: DetsysConfig, var: str) -> pd.DataFrame:
+    return _load_index_events_csv(nominal_runs_csv_path(cfg, var))
+
+
+def _slice_index_frame(slc: CAFSlice) -> pd.DataFrame:
+    index = slc.data.index
+    mc_mask = _mc_row_mask(index)
+    if not mc_mask.any():
+        return pd.DataFrame(columns=[*EVENT_CSV_COLUMNS, "_row"])
+    sub_index = index[mc_mask]
+    frame = _index_frame_from_mcnu_index(sub_index)
+    frame["_row"] = np.flatnonzero(mc_mask)
+    return frame
 
 
 def filter_slice_to_events(slc: CAFSlice, events_df: pd.DataFrame) -> CAFSlice:
-    """
-    Keep slice rows whose (file_index, __ntuple, entry) is in the common-event CSV.
-    """
+    """Keep slice rows whose (__ntuple, entry) is in the common-event CSV."""
     from sbnd.cafclasses.slice import CAFSlice as _CAFSlice
 
     if events_df.empty:
         return _CAFSlice(slc.data.iloc[0:0].copy(), pot=slc.pot)
 
     events = events_df[EVENT_CSV_COLUMNS].drop_duplicates()
-    work = _slice_triple_frame(slc)
+    work = _slice_index_frame(slc)
     if work.empty:
         return _CAFSlice(slc.data.iloc[0:0].copy(), pot=slc.pot)
 
@@ -320,9 +365,9 @@ def require_artifacts(cfg: DetsysConfig, det_vars: list[str]) -> dict[str, Any]:
             "run scripts/build_det_event_lists.py"
         )
     for var in det_vars:
-        csv_path = runs_csv_path(cfg, var)
-        if not csv_path.is_file():
-            raise FileNotFoundError(
-                f"Missing {csv_path}; run scripts/build_det_event_lists.py"
-            )
+        for path in (runs_csv_path(cfg, var), nominal_runs_csv_path(cfg, var)):
+            if not path.is_file():
+                raise FileNotFoundError(
+                    f"Missing {path}; run scripts/build_det_event_lists.py"
+                )
     return scaling

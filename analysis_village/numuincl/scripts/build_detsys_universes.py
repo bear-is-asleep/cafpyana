@@ -29,11 +29,13 @@ for p in (str(REPO_ROOT), str(CAFPYANA_WD)):
         sys.path.insert(0, p)
 
 from detsys_config import (
-    CALO_CUTS,
     CALO_SUFFIXES,
     CALO_VARS,
+    CUTS_BEFORE_MUON,
+    CUTS_FROM_MUON,
+    DETSYS_CUT_NAMES,
     DET_VARS_ALL,
-    cut_chain_for_output,
+    cut_chain_for_detsys,
     build_config,
     build_file_map,
     format_file_map_summary,
@@ -45,9 +47,11 @@ from detsys_config import (
 )
 from detsys_det_match import (
     filter_slice_to_events,
+    load_nominal_common_events,
     load_variation_events,
     require_artifacts,
 )
+from naming import PAND_CUTS_CONT
 from sbnd.cafclasses.binning import Binning2D
 from sbnd.cafclasses.slice import CAFSlice
 from sbnd.detector.definitions import F_SCALE, NUMBER_TARGETS_FV
@@ -72,7 +76,16 @@ from sbnd.stats.systematics import (
 )
 
 
-SLIM_KEYS = ["xsec", "flux", "g4"]
+SLIM_BUNDLED_KEYS = ["xsec_slim", "flux", "g4"]
+SLIM_SUMMARY_KEYS = ["xsec", "flux", "g4"]
+RW_SLIM_PATTERN = [
+    "xsec_slim",
+    "xsec_multisigma",
+    "flux",
+    "g4",
+    "ZExpPCA",
+]
+SIGNAL_CATEGORIES = [0]
 FLUX_FILE = "/exp/sbnd/data/users/munjung/xsec/flux_closure/Gen1FV_flux.root"
 PAND_KEY = "evt_pand*"
 OFFBEAM_COMBINE_OFFSET = int(1e7)
@@ -101,7 +114,10 @@ def _preprocess(slc: CAFSlice) -> None:
 def _rename_slim_columns(slc: CAFSlice) -> None:
     cols = slc.data.columns
     new_cols = [tuple("g4" if x == "slim" else x for x in c) for c in cols]
-    new_cols = [tuple("xsec" if x == "GENIE" else x for x in c) for c in new_cols]
+    new_cols = [tuple("xsec_slim" if x == "GENIE" else x for x in c) for c in new_cols]
+    new_cols = [
+        tuple("xsec_multisigma" if x == "GENIE_multisigma" else x for x in c) for c in new_cols
+    ]
     new_cols = [tuple("flux" if x == "Flux" else x for x in c) for c in new_cols]
     slc.data.columns = slc.data.columns.from_tuples(new_cols, names=cols.names)
 
@@ -375,6 +391,68 @@ def _build_calo_slices_at_muon(nominal_at_muon: CAFSlice) -> list[CAFSlice]:
     return slcs_calo
 
 
+def _cut_chain_before_muon() -> list[str]:
+    return list(CUTS_BEFORE_MUON)
+
+
+def _cuts_after_muon_through(target: str) -> list[str]:
+    if target not in PAND_CUTS_CONT:
+        return []
+    muon_idx = PAND_CUTS_CONT.index("muon")
+    target_idx = PAND_CUTS_CONT.index(target)
+    if target_idx <= muon_idx:
+        return []
+    return list(PAND_CUTS_CONT[muon_idx + 1 : target_idx + 1])
+
+
+def _target_needs_calo_split(target: str) -> bool:
+    if target == "precut" or target not in PAND_CUTS_CONT:
+        return False
+    return PAND_CUTS_CONT.index(target) >= PAND_CUTS_CONT.index("muon")
+
+
+def _prepare_calo_slices_for_target(
+    cfg,
+    file_map,
+    norm,
+    aux_bases: AuxBases,
+    target: str,
+    verbose: bool,
+) -> list[CAFSlice] | None:
+    """Load nominal through fv, apply muon, split calo branches, post-muon cuts to target."""
+    if not cfg.runs_det or not _target_needs_calo_split(target):
+        return None
+
+    if target == "muon":
+        nominal_at_muon = _accumulate_nominal_slice(
+            cfg,
+            file_map,
+            norm,
+            cut_chain_for_detsys("muon"),
+            aux_bases,
+            verbose,
+        )
+        return _build_calo_slices_at_muon(nominal_at_muon)
+
+    nominal_pre_muon = _accumulate_nominal_slice(
+        cfg,
+        file_map,
+        norm,
+        _cut_chain_before_muon(),
+        aux_bases,
+        verbose,
+    )
+    nominal_at_muon = nominal_pre_muon.copy()
+    _preprocess(nominal_at_muon)
+    nominal_at_muon.apply_cut("muon", verbose=verbose)
+    slcs_calo = _build_calo_slices_at_muon(nominal_at_muon)
+    for post_cut in _cuts_after_muon_through(target):
+        for slc in slcs_calo:
+            _preprocess(slc)
+            slc.apply_cut(post_cut, verbose=verbose)
+    return slcs_calo
+
+
 def _init_det_var_systems(specs, var: str) -> dict[str, Systematics]:
     systems_var: dict[str, Systematics] = {}
     for name, bins, _reco_key, _true_key, xsec in specs:
@@ -450,8 +528,22 @@ def _promote_nominal_cv_truth(dst: Systematics, src: Systematics) -> None:
     dst.sigma_tilde = np.copy(src.sigma_tilde)
 
 
+def _slim_rw_keys(sys_obj: Systematics) -> list[str]:
+    """All initialized RW keys for slim pass (bundled + per-knob xsec/flux/g4).
+
+    Multisim in ``xsec_slim``; non-MvA multisigma in ``xsec_multisigma``; MvA ZExp per-knob.
+    ``combine_summaries(xsec)`` sums bundled + MvA covs.
+    """
+    return [
+        k
+        for k, sd in sys_obj.systematics.items()
+        if sd.get("type") in ("xsec", "flux", "g4")
+        and sd.get("variation") != "summary"
+    ]
+
+
 def _pin_slim_cv_sel(
-    sys_obj: Systematics, keys: tuple[str, ...] = ("xsec", "flux", "g4")
+    sys_obj: Systematics, keys: tuple[str, ...] = tuple(SLIM_BUNDLED_KEYS)
 ) -> None:
     """Pin slim CV on RW groups so nominal promote does not steal their reference."""
     slim_cv = sys_obj.sel + sys_obj.sel_background
@@ -490,7 +582,7 @@ def _accumulate_shared_nominal_cv(
 
     nom_fnames = file_map["MC_NOMINAL_FNAMES"]
     base_pot_nom = float(norm["POT_NOMINAL"])
-    events = load_variation_events(cfg, ref_var)
+    events = load_nominal_common_events(cfg, ref_var)
     systems_cv = _init_det_var_systems(specs, ref_var)
 
     file_base = 0
@@ -589,8 +681,11 @@ def _init_systems(
 ) -> dict[str, Systematics]:
     """Chunked-build systematics; det vars merged later, CALO before calo step."""
     systems: dict[str, Systematics] = {}
-    pattern = SLIM_KEYS if include_slim_keys else None
+    pattern = RW_SLIM_PATTERN if include_slim_keys else None
     init_keys = truth_keys if include_slim_keys else []
+    init_kwargs = {"pattern": pattern, "stype": "RW"}
+    if include_slim_keys:
+        init_kwargs["ignore_keys"] = ["stat"]
     for name, bins, reco_key, _true_key, xsec in specs:
         data_vals = _get_values(slc_data, reco_key)
         systems[name] = Systematics.for_chunked_build(
@@ -598,10 +693,9 @@ def _init_systems(
             bins,
             init_keys,
             xsec_unit=xsec,
-            pattern=pattern,
-            stype="RW",
             data=data_vals,
             genweights_data=np.ones(len(data_vals), dtype=float),
+            **init_kwargs,
         )
     return systems
 
@@ -609,6 +703,7 @@ def _init_systems(
 def _run_slim_pass(
     *,
     cfg,
+    cut: str,
     specs,
     slc_data,
     slim_chunks,
@@ -625,7 +720,7 @@ def _run_slim_pass(
         _progress_iter(
             cfg,
             slim_chunks,
-            desc=f"{cut_chain[-1]} slim",
+            desc=f"{cut} slim",
             unit="chunk",
         )
     ):
@@ -678,7 +773,7 @@ def _run_slim_pass(
                 slc_sig_full.data,
                 slc_sel_sig.data,
                 slc_sel_bg.data,
-                sys_names=SLIM_KEYS,
+                sys_names=_slim_rw_keys(sys_obj),
             )
     return systems
 
@@ -710,10 +805,11 @@ def _save_for_mode(systems: dict[str, Systematics], cut_universe_dir: str, build
         _warn_missing_cv_metadata(cut_universe_dir, build_mode)
     for name, sys_obj in systems.items():
         if build_mode == "full_slim":
+            include_sys_keys = _slim_rw_keys(sys_obj)
             sys_obj.save(
                 cut_universe_dir,
                 metadata_dir="metadata_detsys",
-                include_sys_keys=SLIM_KEYS,
+                include_sys_keys=include_sys_keys,
                 skip_metadata=True,
                 merge_sys_dict=True,
             )
@@ -889,6 +985,7 @@ def _process_det_chunks(
     specs,
     file_map,
     norm,
+    cut,
     cut_chain,
     categories,
     cfg,
@@ -902,7 +999,7 @@ def _process_det_chunks(
     for var, flist in _progress_iter(
         cfg,
         list(zip(det_vars, det_fnames)),
-        desc=f"{cut_chain[-1]} det vars",
+        desc=f"{cut} det vars",
         unit="var",
     ):
         if not flist:
@@ -1100,10 +1197,13 @@ def main() -> int:
         help="Print cut and load progress.",
     )
     parser.add_argument(
-        "--cuts",
-        choices=["all", "muon"],
-        default="all",
-        help="all: save precut through cont. muon: save muon, cont_full, cont only.",
+        "--cut",
+        default=None,
+        metavar="CUT",
+        help=(
+            "Run all save stages through this cut (default: full chain). "
+            f"Choices: {sorted(DETSYS_CUT_NAMES)}."
+        ),
     )
     args = parser.parse_args()
     verbose = args.verbose
@@ -1120,14 +1220,14 @@ def main() -> int:
         chunk_nfiles=args.chunk_size,
         ncpu=args.ncpu,
         show_progress=show_progress,
-        cuts=args.cuts,
+        cut=args.cut,
     )
     Path(cfg.save_dir).mkdir(parents=True, exist_ok=True)
     Path(cfg.plot_dir).mkdir(parents=True, exist_ok=True)
     file_map = build_file_map(cfg)
     print(format_file_map_summary(cfg, file_map, chunk_nfiles=cfg.chunk_nfiles))
     slim_chunks = chunk_file_list(file_map["MC_SLIM_FNAMES"], cfg.chunk_nfiles)
-    cuts = cfg.cuts
+    save_stages = cfg.cuts
 
     det_chunk_counts = {
         var: len(chunk_file_list(flist, cfg.chunk_nfiles))
@@ -1147,7 +1247,7 @@ def main() -> int:
         print(json.dumps(
             {
                 "build_mode": cfg.build_mode,
-                "cuts": cuts,
+                "cuts": save_stages,
                 "ncpu": cfg.ncpu,
                 "chunk_size": cfg.chunk_nfiles,
                 "n_slim_files": len(file_map["MC_SLIM_FNAMES"]),
@@ -1185,7 +1285,7 @@ def main() -> int:
         print(f"Using existing normalization from {norm_path} (pass --recompute-norm to refresh)")
     norm = load_normalization_json(cfg.save_dir)
 
-    categories = [0, 1] if cfg.contained else [0, 1]
+    categories = SIGNAL_CATEGORIES
     binning2d = Binning2D(diff_momentum_bins_2d=DIFF_MOMENTUM_BINS_2D)
     differential_edges = binning2d.differential_edges
     xsec_unit = _compute_xsec_unit(norm["POT_DATA"])
@@ -1195,23 +1295,22 @@ def main() -> int:
         tqdm.write("Loading aux (lowe + data offbeam)...")
     aux_bases = _prepare_aux(cfg, file_map, norm, verbose)
 
-    # CALO snapshots are built once at muon and reused for cont_full/cont (notebook parity).
+    # CALO snapshots: load through fv, split at muon, post-muon cuts on branches.
     slcs_calo: list[CAFSlice] | None = None
-    for cut in _progress_iter(cfg, cuts, desc="cuts", unit="cut"):
-        cut_chain = cut_chain_for_output(cut, cfg.cuts)
+    for save_cut in _progress_iter(cfg, save_stages, desc="cuts", unit="cut"):
+        apply_chain = cut_chain_for_detsys(save_cut)
         if verbose:
-            print(f"Processing cut {cut} with chain {cut_chain}")
+            print(f"Processing save_cut {save_cut} with apply_chain {apply_chain}")
 
-        if cfg.runs_det and cut == "muon":
-            nominal_at_muon = _accumulate_nominal_slice(
-                cfg, file_map, norm, cut_chain, aux_bases, verbose
-            )
-            slcs_calo = _build_calo_slices_at_muon(nominal_at_muon)
-
-        if cfg.runs_det and slcs_calo is not None and cut in {"cont_full", "cont"}:
-            for slc in slcs_calo:
-                _preprocess(slc)
-                slc.apply_cut(cut, verbose=verbose)
+        if cfg.runs_det and save_cut in CUTS_FROM_MUON:
+            if slcs_calo is None:
+                slcs_calo = _prepare_calo_slices_for_target(
+                    cfg, file_map, norm, aux_bases, save_cut, verbose
+                )
+            elif save_cut != "muon":
+                for slc in slcs_calo:
+                    _preprocess(slc)
+                    slc.apply_cut(save_cut, verbose=verbose)
 
         slc_data = CAFSlice.load(
             file_map["DATA_FNAMES"],
@@ -1220,23 +1319,23 @@ def main() -> int:
             verbose=_load_progress(cfg, verbose),
         )
         _preprocess(slc_data)
-        slc_data.apply_cut_chain(cut_chain, verbose=verbose)
+        slc_data.apply_cut_chain(apply_chain, verbose=verbose)
 
         slc_lowe = aux_bases.lowe.copy()
         slc_offbeam_data = aux_bases.offbeam_data.copy()
         _preprocess(slc_lowe)
         _preprocess(slc_offbeam_data)
-        slc_lowe.apply_cut_chain(cut_chain, verbose=verbose)
-        slc_offbeam_data.apply_cut_chain(cut_chain, verbose=verbose)
+        slc_lowe.apply_cut_chain(apply_chain, verbose=verbose)
+        slc_offbeam_data.apply_cut_chain(apply_chain, verbose=verbose)
 
         slc_offbeam_mc = None
         slc_nominal_sig = None
         if cfg.runs_cosmic:
             slc_offbeam_mc = _accumulate_offbeam_mc_at_cut(
-                cfg, file_map, norm, cut_chain, verbose
+                cfg, file_map, norm, apply_chain, verbose
             )
             slc_nominal_sig = _accumulate_nominal_cosmic_signal_at_cut(
-                cfg, file_map, norm, cut_chain, categories, verbose
+                cfg, file_map, norm, apply_chain, categories, verbose
             )
 
         systems: dict[str, Systematics] = {}
@@ -1244,18 +1343,19 @@ def main() -> int:
         if cfg.runs_slim:
             systems = _run_slim_pass(
                 cfg=cfg,
+                cut=save_cut,
                 specs=specs,
                 slc_data=slc_data,
                 slim_chunks=slim_chunks,
                 norm=norm,
-                cut_chain=cut_chain,
+                cut_chain=apply_chain,
                 categories=categories,
                 slc_lowe=slc_lowe,
                 slc_offbeam_data=slc_offbeam_data,
                 verbose=verbose,
             )
             if not systems and cfg.full_slim:
-                print(f"No slim events after cuts for {cut}, skipping")
+                print(f"No slim events after cuts for {save_cut}, skipping")
                 continue
             if systems and cfg.runs_det:
                 for name in systems:
@@ -1269,7 +1369,7 @@ def main() -> int:
             )
 
         if not systems:
-            print(f"No events to process for {cut}, skipping")
+            print(f"No events to process for {save_cut}, skipping")
             continue
 
         if cfg.runs_det:
@@ -1278,7 +1378,7 @@ def main() -> int:
                 specs,
                 file_map,
                 norm,
-                cut_chain,
+                apply_chain,
                 categories,
                 cfg,
                 aux_bases,
@@ -1294,7 +1394,8 @@ def main() -> int:
                 specs,
                 file_map,
                 norm,
-                cut_chain,
+                save_cut,
+                apply_chain,
                 categories,
                 cfg,
                 aux_bases,
@@ -1302,7 +1403,7 @@ def main() -> int:
                 verbose,
             )
 
-            if slcs_calo is not None and cut in CALO_CUTS:
+            if slcs_calo is not None and save_cut in CUTS_FROM_MUON:
                 _ensure_calo_systematics(systems)
                 _process_calo_systematics(systems, specs, slcs_calo, categories)
 
@@ -1319,7 +1420,7 @@ def main() -> int:
                     slc_nominal_sig,
                     slc_offbeam_mc,
                     slc_offbeam_data,
-                    cut,
+                    save_cut,
                     cfg,
                 )
 
@@ -1327,10 +1428,10 @@ def main() -> int:
             for name in systems:
                 systems[name].finalize_chunked_build()
 
-        cut_universe_dir = f"{cfg.save_dir}/{cut}"
+        cut_universe_dir = f"{cfg.save_dir}/{save_cut}"
         _save_for_mode(systems, cut_universe_dir, cfg.save_build_mode)
         if cfg.show_progress:
-            tqdm.write(f"Saved {cut} universes to {cut_universe_dir}")
+            tqdm.write(f"Saved {save_cut} universes to {cut_universe_dir}")
 
     if cfg.show_progress:
         tqdm.write("Done building chunked universes.")

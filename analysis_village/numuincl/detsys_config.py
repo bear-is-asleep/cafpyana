@@ -10,38 +10,41 @@ from typing import Any
 import numpy as np
 from tqdm import tqdm
 
-from naming import PAND_CUTS_BASE, PAND_CUTS_CONT
+from naming import PAND_CUTS_CONT
 from sbnd.general.utils import read_hdf
 
-CUTS_MODES = frozenset({"all", "muon"})
-CUTS_BEFORE_MUON = tuple(PAND_CUTS_BASE[: PAND_CUTS_BASE.index("muon")])
 DETSYS_CUTS_ALL = ("precut", *PAND_CUTS_CONT)
-DETSYS_CUTS_MUON = ("muon", "cont_full", "cont")
+DETSYS_CUT_NAMES = frozenset(DETSYS_CUTS_ALL)
+_MUON_IDX = PAND_CUTS_CONT.index("muon")
+CUTS_BEFORE_MUON = tuple(PAND_CUTS_CONT[:_MUON_IDX])
+CUTS_FROM_MUON = tuple(PAND_CUTS_CONT[_MUON_IDX:])
+
+# Slim HDF: bundled multisim + bundled multisigma (MvA ZExp per-knob).
+SLIM_HDF_SCHEMA = "ar23p_slim_bundle_v1"
+SIGNAL_CATEGORIES_XSEC = [0]
 
 
-def cuts_for_mode(mode: str) -> tuple[str, ...]:
-    if mode == "all":
+def save_stages_for(cut: str | None) -> tuple[str, ...]:
+    """Output directories to write. None = full build (all stages)."""
+    if cut is None:
         return DETSYS_CUTS_ALL
-    if mode == "muon":
-        return DETSYS_CUTS_MUON
-    raise ValueError(f"cuts must be 'all' or 'muon', got {mode!r}")
+    if cut not in DETSYS_CUT_NAMES:
+        raise ValueError(
+            f"cut must be one of {sorted(DETSYS_CUT_NAMES)}, got {cut!r}"
+        )
+    return (cut,)
 
 
-def cut_chain_for_output(cut: str, output_cuts: list[str] | tuple[str, ...]) -> list[str]:
-    """
-    Build the apply_cut_chain list for a save stage.
+def cut_chain_for_detsys(cut: str) -> list[str]:
+    """Apply-cut chain for save stage cut: all PAND_CUTS_CONT entries through cut."""
+    if cut == "precut":
+        return []
+    if cut not in PAND_CUTS_CONT:
+        raise ValueError(
+            f"cut {cut!r} must be 'precut' or one of {list(PAND_CUTS_CONT)}"
+        )
+    return list(PAND_CUTS_CONT[: PAND_CUTS_CONT.index(cut) + 1])
 
-    Output starting at muon still applies flashpe through fv internally.
-    Full output (precut + PAND_CUTS_CONT) matches the legacy per-cut chain.
-    """
-    output = list(output_cuts)
-    if cut not in output:
-        raise ValueError(f"cut {cut!r} not in output_cuts {output}")
-    suffix = output[: output.index(cut) + 1]
-    chain = [c for c in suffix if c != "precut"]
-    if chain and chain[0] == "muon":
-        chain = list(CUTS_BEFORE_MUON) + chain
-    return chain
 
 PDS_VARS = ["pmtgain", "pmtqe", "pmtspe"]
 SCE_VARS = ["nosce", "twicesce"]
@@ -58,7 +61,6 @@ CALO_SUFFIXES = [
 ]
 CALO_VARS = [s[1:] for s in CALO_SUFFIXES]
 DET_VARS_ALL = PDS_VARS + SCE_VARS + WIREMOD_VARS
-CALO_CUTS = frozenset({"muon", "cont_full", "cont"})
 
 BUILD_MODES = frozenset(
     {
@@ -107,13 +109,14 @@ _SINGLE_FILE_DIV = 0
 class DetsysConfig:
     day: str = "checkpoint7_test"
     data_dir: str = "/exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora"
-    version: str = "v8"
+    # Slim GENIE HDF with full AR23+ knobs + per-knob multisigma
+    version: str = "v9"
     contained: bool = True
     build_mode: str = "default"
     ncpu: int = 1
     chunk_nfiles: int = 8
     show_progress: bool = True
-    cuts_mode: str = "all"
+    cut: str | None = None
 
     @property
     def small(self) -> bool:
@@ -189,7 +192,7 @@ class DetsysConfig:
 
     @property
     def cuts(self) -> list[str]:
-        return list(cuts_for_mode(self.cuts_mode))
+        return list(save_stages_for(self.cut))
 
 
 def build_config(
@@ -199,8 +202,9 @@ def build_config(
     chunk_nfiles: int = 8,
     ncpu: int = 1,
     show_progress: bool = True,
-    cuts: str = "all",
+    cut: str | None = None,
     data_dir: str | None = None,
+    version: str | None = None,
     small: bool | None = None,
     tiny: bool | None = None,
 ) -> DetsysConfig:
@@ -217,11 +221,15 @@ def build_config(
         "ncpu": ncpu,
         "show_progress": show_progress,
     }
-    if cuts not in CUTS_MODES:
-        raise ValueError(f"cuts must be one of {sorted(CUTS_MODES)}, got {cuts!r}")
-    kwargs["cuts_mode"] = cuts
+    if cut is not None and cut not in DETSYS_CUT_NAMES:
+        raise ValueError(
+            f"cut must be one of {sorted(DETSYS_CUT_NAMES)}, got {cut!r}"
+        )
+    kwargs["cut"] = cut
     if data_dir is not None:
         kwargs["data_dir"] = data_dir
+    if version is not None:
+        kwargs["version"] = version
     return DetsysConfig(**kwargs)
 
 

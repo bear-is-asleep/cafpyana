@@ -17,6 +17,9 @@ for p in (str(REPO_ROOT), str(CAFPYANA_WD)):
 from detsys_config import build_config, build_file_map, compute_normalization
 from detsys_det_match import (
     build_variation_scaling_entry,
+    nominal_all_entries_path,
+    nominal_ntuple_entries_frame,
+    nominal_runs_csv_path,
     pairwise_common_events,
     pot_scaling_path,
     runs_csv_path,
@@ -30,9 +33,9 @@ MCNU_KEY = "mcnu*"
 HDR_KEY = "hdr*"
 
 
-def _load_nominal_mcnu_hdr(file_map, ncpu: int):
-    mcnu = NU.load(file_map["MC_NOMINAL_FNAMES"], key=MCNU_KEY, ncpu=ncpu, show_progress=False)
-    hdr = CAF.load(file_map["MC_NOMINAL_FNAMES"], key=HDR_KEY, ncpu=ncpu, show_progress=False)
+def _load_mcnu_hdr(fnames: list[str], ncpu: int):
+    mcnu = NU.load(fnames, key=MCNU_KEY, ncpu=ncpu, show_progress=False)
+    hdr = CAF.load(fnames, key=HDR_KEY, ncpu=ncpu, show_progress=False)
     return mcnu, hdr
 
 
@@ -44,8 +47,14 @@ def build_event_lists(
     only_var: str | None = None,
     dry_run: bool = False,
 ) -> dict:
-    nom_mcnu, nom_hdr = _load_nominal_mcnu_hdr(file_map, cfg.ncpu)
+    nom_mcnu, nom_hdr = _load_mcnu_hdr(file_map["MC_NOMINAL_FNAMES"], cfg.ncpu)
     pot_nominal_full = float(norm["POT_NOMINAL"])
+
+    if not dry_run:
+        nom_all = nominal_ntuple_entries_frame(nom_mcnu)
+        nom_all_path = nominal_all_entries_path(cfg)
+        write_runs_csv(nom_all, nom_all_path)
+        print(f"Wrote {nom_all_path} ({len(nom_all)} rows)")
 
     variations: dict = {}
     det_vars = file_map["DET_VARS"]
@@ -63,18 +72,19 @@ def build_event_lists(
             continue
 
         csv_path = runs_csv_path(cfg, var)
+        nom_csv_path = nominal_runs_csv_path(cfg, var)
         pot_det_full = float(norm["POT_DET"][var])
 
         if dry_run:
-            print(f"{var}: {len(flist)} files -> {csv_path}")
+            print(f"{var}: {len(flist)} files -> {csv_path}, {nom_csv_path}")
             continue
 
-        var_mcnu = NU.load(flist, key=MCNU_KEY, ncpu=cfg.ncpu, show_progress=False)
-        var_hdr = CAF.load(flist, key=HDR_KEY, ncpu=cfg.ncpu, show_progress=False)
-        events_df, n_nominal, n_variation, n_common = pairwise_common_events(
+        var_mcnu, var_hdr = _load_mcnu_hdr(flist, cfg.ncpu)
+        var_events_df, nom_events_df, n_nominal, n_variation, n_common = pairwise_common_events(
             nom_mcnu, nom_hdr, var_mcnu, var_hdr
         )
-        write_runs_csv(events_df, csv_path)
+        write_runs_csv(var_events_df, csv_path)
+        write_runs_csv(nom_events_df, nom_csv_path)
         variations[var] = build_variation_scaling_entry(
             var=var,
             n_nominal=n_nominal,
@@ -83,6 +93,7 @@ def build_event_lists(
             pot_nominal_full=pot_nominal_full,
             pot_det_full=pot_det_full,
             runs_csv=str(csv_path.relative_to(cfg.data_dir)),
+            nominal_runs_csv=str(nom_csv_path.relative_to(cfg.data_dir)),
         )
         print(
             f"{var}: n_common={n_common} / nom={n_nominal} var={n_variation} "
@@ -116,19 +127,48 @@ def build_event_lists(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build det variation event lists and POT scaling.")
+    parser.add_argument(
+        "--default-subsample",
+        action="store_true",
+        default=False,
+        help="Use default 1/4 nominal/det subsample (dev only; not for production).",
+    )
     parser.add_argument("--small", action="store_true", help="Use SMALL file subset.")
     parser.add_argument(
         "--tiny",
         action="store_true",
         help="One file per sample list (overrides --small).",
     )
+    parser.add_argument("--version", default=None, help="Dataset version tag (default: v9).")
+    parser.add_argument("--data-dir", default=None, help="Override pandora data root.")
     parser.add_argument("--ncpu", type=int, default=8, help="Workers for CAF/HDF loading.")
     parser.add_argument("--var", default=None, help="Process a single variation only.")
     parser.add_argument("--dry-run", action="store_true", help="Print paths only.")
     args = parser.parse_args()
 
-    cfg = build_config(small=args.small, tiny=args.tiny, ncpu=args.ncpu)
+    if args.default_subsample:
+        build_mode = "default"
+    elif args.tiny:
+        build_mode = "tiny"
+    elif args.small:
+        build_mode = "small"
+    else:
+        build_mode = "full_det"
+
+    cfg = build_config(
+        build_mode=build_mode,
+        ncpu=args.ncpu,
+        data_dir=args.data_dir,
+        version=args.version,
+    )
     file_map = build_file_map(cfg)
+    print(
+        f"version={cfg.version} data_dir={cfg.data_dir} build_mode={cfg.build_mode} "
+        f"nominal_files={len(file_map['MC_NOMINAL_FNAMES'])}"
+    )
+    for var, flist in zip(file_map["DET_VARS"], file_map["DET_FNAMES"]):
+        if flist:
+            print(f"  {var}: {len(flist)} files")
 
     if args.dry_run:
         build_event_lists(cfg, file_map, {}, only_var=args.var, dry_run=True)

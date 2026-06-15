@@ -66,7 +66,7 @@ python scripts/build_detsys_universes.py --full-slim-test --day test_YYYYMMDD --
 
 ## Step 1: Event matching and POT scaling
 
-For each detector variation (`pmtgain`, `nosce`, `wiremodxtheta`, …), find mcnu events in common with nominal on **`(file_index, __ntuple, entry)`** and write per-var CSV plus global `pot_scaling.json`.
+For each detector variation (`pmtgain`, `nosce`, `wiremodxtheta`, …), find mcnu events in common with nominal on **`(run, subrun, evt, E)`**, then write per-variation CSVs of matched **`(__ntuple, entry)`** keys (separate files for nominal vs variation index space) plus global `pot_scaling.json`. All nominal `(__ntuple, entry)` keys are also written to `det_var/{version}/nominal_ntuple_entries.csv`.
 
 ```bash
 python scripts/build_det_event_lists.py --small

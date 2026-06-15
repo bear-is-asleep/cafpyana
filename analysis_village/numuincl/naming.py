@@ -32,10 +32,11 @@ PAND_CUT_LABELS_BASE = [
 PAND_CUTS = PAND_CUTS_BASE + ['lowz']
 PAND_CUT_LABELS = PAND_CUT_LABELS_BASE + ['Low Z']
 
-PAND_CUTS_CONT = PAND_CUTS_BASE + ['cont_full', 'cont']
+PAND_CUTS_CONT = PAND_CUTS_BASE + ['cont_full', 'cont', 'all_cont']
 PAND_CUT_LABELS_CONT = PAND_CUT_LABELS_BASE + [
     'Muon Contained\n(full detector)',
     'Muon Contained\n(by TPC)',
+    'Slice Contained\n(by TPC)',
 ]
 
 GENIE_LABEL = 'GENIE v3.4.0 AR23_20i_00_000'

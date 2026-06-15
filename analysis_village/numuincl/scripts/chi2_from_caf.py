@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from detsys_config import DetsysConfig, cut_chain_for_output
+from detsys_config import DetsysConfig, cut_chain_for_detsys
 from naming import PAND_CUTS_CONT, PAND_KEY
 from sbnd.cafclasses.slice import CAFSlice
 from sbnd.numu.numu_constants import (
@@ -59,10 +59,7 @@ def cut_chain_for_syst_dir(syst_path: Path) -> list[str]:
     cut_name = syst_path.name
     if cut_name == "full":
         return list(PAND_CUTS_CONT)
-    if cut_name in PAND_CUTS_CONT:
-        idx = PAND_CUTS_CONT.index(cut_name)
-        return list(PAND_CUTS_CONT[: idx + 1])
-    return list(cut_chain_for_output(cut_name, PAND_CUTS_CONT))
+    return cut_chain_for_detsys(cut_name)
 
 
 def total_cov_dir(syst_path: Path) -> Path:
