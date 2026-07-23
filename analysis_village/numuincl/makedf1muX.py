@@ -19,6 +19,7 @@ from sbnd.cafclasses.nu import NU
 from sbnd.cafclasses.binning import Binning2D
 from sbnd.numu.numu_constants import *
 from sbnd.detector.definitions import *
+from sbnd.detector.volume import track_cont_matches_vertex_tpc
 
 DEFAULT_INCLUDE_WEIGHTS = False
 DEFAULT_SLIM = False
@@ -143,7 +144,7 @@ def make_custom_trkdf(f, trkScoreCut=None, updaterecomb=None, **trkArgs):
     return trkdf
 
 def make_pandora_evtdf(f, include_weights=None, wgt_types=["bnb","genie","g4"], slim=None,
-                       trkScoreCut=None, trkDistCut=-1., cutClearCosmic=True, updaterecomb=None,
+                       trkScoreCut=None, trkDistCut=-1., updaterecomb=None,
                        return_mcdf=False, **trkArgs):
     include_weights = _resolve_flag(include_weights, INCLUDE_WEIGHTS)
     slim = _resolve_flag(slim, SLIM)
@@ -286,8 +287,13 @@ def make_pandora_evtdf(f, include_weights=None, wgt_types=["bnb","genie","g4"], 
         mudf.columns = pd.MultiIndex.from_tuples([tuple(["mu" + key_suffix] + list(c)) for c in mudf.columns])
         mudf_list.append(mudf)
 
-    # All score-cut PFPs in slice TPC-contained (cont_tpc0 | cont_tpc1)
-    trk_in_tpc = (trkdf.pfp.trk.cont_tpc0 | trkdf.pfp.trk.cont_tpc1).fillna(False)
+    # All score-cut PFPs TPC-contained in the same TPC as the slice vertex
+    vtx_x = broadcast(slcdf.slc.vertex.x, trkdf)
+    trk_in_tpc = track_cont_matches_vertex_tpc(
+        trkdf.pfp.trk.cont_tpc0,
+        trkdf.pfp.trk.cont_tpc1,
+        vtx_x,
+    ).fillna(False)
     slice_levels = list(range(trkdf.index.nlevels - 1))
     all_pfps_cont = trk_in_tpc.groupby(level=slice_levels).all()
     slcdf = multicol_add(slcdf, all_pfps_cont.rename(("slc", "all_pfps_cont")), default=False)
@@ -578,7 +584,8 @@ def make_pandora_evtdf_processed_selected_cut(f, include_weights=None, wgt_types
         print(f'updaterecomb: {updaterecomb}')
     slc = CAFSlice(df)
     slc.remove_column_suffix(MU_KEY_SUFFIXES[-1]) #Fix null variation
-    slc.cut_all(cut=True,mode='reco',cont=True)
+    # Store before cut all in case we revert the cut
+    slc.cut_all(cut=True,mode='reco',cont=True,include_all_cont=False)
     # with open('/exp/sbnd/app/users/brindenc/develop/cafpyana/analysis_village/numuincl/slc_selected_keys_inmaker.txt','w') as f:
     #     for k in slc.data.keys():
     #         f.write(f'{k}\n')

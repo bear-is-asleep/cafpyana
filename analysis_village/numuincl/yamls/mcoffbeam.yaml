@@ -1,4 +1,4 @@
-input_dir: /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/offbeam/v4
+input_dir: /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/offbeam
 #output_dir: /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/offbeam/v9
 output_dir: /pnfs/sbnd/scratch/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/offbeam/v9
 

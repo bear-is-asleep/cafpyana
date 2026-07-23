@@ -16,13 +16,14 @@ if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
 from move_files_common import (
-    JOB_DIR_RE,
     PANDORA_DATA,
     PANDORA_PERSISTENT,
     VERSION,
     Job,
     count_files,
+    iter_job_dirs,
     print_dry_run_summary,
+    print_makeup_dry_run_summary,
     run_moves,
 )
 
@@ -36,21 +37,13 @@ def collect_jobs(
     jobs: list[Job] = []
     skipped: list[str] = []
 
-    for job_dir in sorted(source_base.rglob("*")):
-        if not job_dir.is_dir():
-            continue
-        if not JOB_DIR_RE.match(job_dir.name):
-            continue
-        if job_dir.parent.name != version:
-            continue
-        if only and only not in job_dir.name:
-            continue
-        n_all, n_df = count_files(job_dir)
+    for job_dir in iter_job_dirs(source_base, version, only):
+        n_all, n_df, nbytes = count_files(job_dir)
         if n_all == 0:
             skipped.append(f"empty: {job_dir}")
             continue
         rel = job_dir.parent.relative_to(source_base)
-        jobs.append((job_dir, dest_base / rel / job_dir.name, n_all, n_df))
+        jobs.append((job_dir, dest_base / rel / job_dir.name, n_all, n_df, nbytes))
 
     return jobs, skipped
 
@@ -59,7 +52,11 @@ def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--source", default=PANDORA_DATA)
     p.add_argument("--dest-base", default=PANDORA_PERSISTENT)
-    p.add_argument("--only", default="", help="Substring filter on job dir name")
+    p.add_argument(
+        "--only",
+        default="",
+        help="Include job dirs whose name contains any substring (comma-separated)",
+    )
     p.add_argument(
         "--version",
         default=VERSION,
@@ -67,8 +64,16 @@ def main() -> int:
     )
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--overwrite", action="store_true")
+    p.add_argument(
+        "--makeup",
+        action="store_true",
+        help="Resume interrupted move: copy missing files only, keep source",
+    )
     p.add_argument("--ncpu", type=int, default=4)
     args = p.parse_args()
+
+    if args.makeup and args.overwrite:
+        p.error("--makeup and --overwrite are mutually exclusive")
 
     source_base = Path(args.source)
     dest_base = Path(args.dest_base)
@@ -84,10 +89,13 @@ def main() -> int:
             print(f"  {line}", file=sys.stderr)
 
     if args.dry_run:
-        print_dry_run_summary(jobs)
+        if args.makeup:
+            print_makeup_dry_run_summary(jobs)
+        else:
+            print_dry_run_summary(jobs, copy=False)
         return 0
 
-    return run_moves(jobs, args.overwrite, args.ncpu)
+    return run_moves(jobs, args.overwrite, args.ncpu, makeup=args.makeup, copy=False)
 
 
 if __name__ == "__main__":

@@ -1,12 +1,11 @@
 from importlib import import_module
 from analysis_village.numuincl import makedf1muX as maker
 
-# Auto-generated for job 'nosyst_nocuts_recomb'
+# Auto-generated for job 'dent_reprocess_data'
 maker.INCLUDE_WEIGHTS = False
 maker.SLIM = False
-maker.set_update_recomb(True)
+maker.set_update_recomb(False)
 maker.VERBOSE = False
-maker.ADD_STAT_UNC = False
 maker.apply_setting_dependencies()
 
 _base = import_module('analysis_village.numuincl.configs.base')

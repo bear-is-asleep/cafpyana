@@ -1,11 +1,11 @@
-input_dir: /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/mc_syst/v8
+input_dir: /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/mc_syst/
 output_dir: /exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/mc_syst/v9
 #output_dir: /pnfs/sbnd/scratch/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora/mc_syst/v9
 
 jobs:
-  - name: slimsyst_nocuts_recomb
+  - name: nosyst_nocuts_recomb
     enabled: true
-    description: INCLUDE_WEIGHTS=True, SLIM=True, UPDATE_RECOMB=True, ADD_STAT_UNC=False
+    description: INCLUDE_WEIGHTS=True, SLIM=False, UPDATE_RECOMB=True, ADD_STAT_UNC=False
     base_config: analysis_village.numuincl.configs.base
     dfs:
       - makedf.makedf.make_hdrdf
@@ -16,17 +16,17 @@ jobs:
       mcnu, evt_pand, 
       trk]
     input_list: mc_fullpand.list
-    output: mcbnb_tinypand_slimsyst_nocuts_recomb
+    output: mcbnb_tinypand_nosyst_nocuts_recomb4
     settings:
       INCLUDE_WEIGHTS: true
-      SLIM: true
+      SLIM: false
       UPDATE_RECOMB: true
       VERBOSE: true
       ADD_STAT_UNC: false
     args:
       ngrid: 0
-      ncpu: -1
-      nfile: 2
+      ncpu: 10
+      nfile: 10
       keeplocal: false
   # - name: fullsyst_fullcuts_norecomb
   #   enabled: true

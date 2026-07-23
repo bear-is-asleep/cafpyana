@@ -79,6 +79,10 @@ def grid_input_copy_source(path):
         return path.replace("/pnfs", "root://fndcadoor.fnal.gov:1094/pnfs/fnal.gov/usr", 1)
     return path
 
+def grid_local_input_name(job_idx, file_idx, path):
+    basename = path.rstrip('/').split('/')[-1]
+    return f"job{job_idx}_in{file_idx:04d}__{basename}"
+
 def run_pool(output, inputs, nproc):
     os.nice(10)
     ntuples = NTupleGlob(inputs, None)
@@ -256,16 +260,17 @@ def run_grid(inputfiles):
         flist = flistForEachJob[i_flist]
         out = open(MasterJobDir + '/run_%s.sh'%(i_flist),'w')
         out.write('#!/bin/bash\n')
+        out.write('set -euo pipefail\n')
         cmd = 'python run_df_maker.py -c ' + args.config + ' -o ' + args.output + '_%d'%i_flist + '.df -ncpu 7 -i'
         for i_f in range(0,len(flist)):
             out.write('echo "[run_%s.sh] input %d : %s"\n'%(i_flist, i_f, flist[i_f]))
             copy_source = grid_input_copy_source(flist[i_f])
-            local_input = flist[i_f].rstrip('/').split('/')[-1]
+            local_input = grid_local_input_name(i_flist, i_f, flist[i_f])
             if i_f == 0:
                 cmd += ' ' + local_input
             else: 
                 cmd += ',' + local_input
-            out.write('xrdcp ' + shlex.quote(copy_source) + ' .\n') ## -- for checking auth
+            out.write('xrdcp -f ' + shlex.quote(copy_source) + ' ' + shlex.quote(local_input) + '\n')
         out.write('ls -alh\n')
         out.write(cmd)
         out.close()
