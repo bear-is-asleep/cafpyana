@@ -1180,6 +1180,21 @@ def main() -> int:
     parser.add_argument("--chunk-size", type=int, default=8, help="Files per chunk for slim/det/nominal/offbeam.")
     parser.add_argument("--day", default=datetime.now().strftime("%Y%m%d"), help="Output day/tag.")
     parser.add_argument("--ncpu", type=int, default=1, help="Workers for CAF/HDF loading.")
+    parser.add_argument(
+        "--data-dir",
+        default=None,
+        help="Override pandora input root (HDF globs).",
+    )
+    parser.add_argument(
+        "--out-dir",
+        default=None,
+        help="Override write root for det artifacts / universes / plots (default: data_dir).",
+    )
+    parser.add_argument(
+        "--version",
+        default=None,
+        help="Dataset version tag for det_var paths / event lists (default: v9).",
+    )
     parser.add_argument("--dry-run", action="store_true", help="Print chunk plan only (skips POT scan).")
     parser.add_argument(
         "--recompute-norm",
@@ -1221,6 +1236,9 @@ def main() -> int:
         ncpu=args.ncpu,
         show_progress=show_progress,
         cut=args.cut,
+        data_dir=args.data_dir,
+        out_dir=args.out_dir,
+        version=args.version,
     )
     Path(cfg.save_dir).mkdir(parents=True, exist_ok=True)
     Path(cfg.plot_dir).mkdir(parents=True, exist_ok=True)

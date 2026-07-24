@@ -107,8 +107,10 @@ _SINGLE_FILE_DIV = 0
 
 @dataclass(frozen=True)
 class DetsysConfig:
-    day: str = "checkpoint7_test"
+    day: str = "checkpoint10_test"
     data_dir: str = "/exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora"
+    # Written artifacts (det CSVs, pot_scaling, universes, plots). None -> data_dir.
+    out_dir: str | None = None
     # Slim GENIE HDF with full AR23+ knobs + per-knob multisigma
     version: str = "v9"
     contained: bool = True
@@ -117,6 +119,10 @@ class DetsysConfig:
     chunk_nfiles: int = 8
     show_progress: bool = True
     cut: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.out_dir is None:
+            object.__setattr__(self, "out_dir", self.data_dir)
 
     @property
     def small(self) -> bool:
@@ -180,7 +186,7 @@ class DetsysConfig:
 
     @property
     def save_dir(self) -> str:
-        return f"{self.data_dir}/data/{self.day}/syst"
+        return f"{self.out_dir}/data/{self.day}/syst"
 
     @property
     def universe_dir(self) -> str:
@@ -188,7 +194,7 @@ class DetsysConfig:
 
     @property
     def plot_dir(self) -> str:
-        return f"{self.data_dir}/plots/{self.day}/syst"
+        return f"{self.out_dir}/plots/{self.day}/syst"
 
     @property
     def cuts(self) -> list[str]:
@@ -198,12 +204,13 @@ class DetsysConfig:
 def build_config(
     *,
     build_mode: str = "default",
-    day: str = "checkpoint7_test",
+    day: str = "checkpoint10_test",
     chunk_nfiles: int = 8,
     ncpu: int = 1,
     show_progress: bool = True,
     cut: str | None = None,
     data_dir: str | None = None,
+    out_dir: str | None = None,
     version: str | None = None,
     small: bool | None = None,
     tiny: bool | None = None,
@@ -228,6 +235,8 @@ def build_config(
     kwargs["cut"] = cut
     if data_dir is not None:
         kwargs["data_dir"] = data_dir
+    if out_dir is not None:
+        kwargs["out_dir"] = out_dir
     if version is not None:
         kwargs["version"] = version
     return DetsysConfig(**kwargs)

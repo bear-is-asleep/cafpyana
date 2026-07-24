@@ -34,28 +34,30 @@ def det_var_subdir(var: str) -> str:
     raise ValueError(f"Unknown detector variation: {var}")
 
 
+def det_var_root(cfg: DetsysConfig) -> Path:
+    """Write/read root for det event-list artifacts (under out_dir)."""
+    return Path(cfg.out_dir) / "det_var"
+
+
 def runs_csv_path(cfg: DetsysConfig, var: str) -> Path:
-    subdir = det_var_subdir(var)
-    return Path(cfg.data_dir) / "det_var" / subdir / cfg.version / f"{var}_runs.csv"
+    return det_var_root(cfg) / det_var_subdir(var) / cfg.version / f"{var}_runs.csv"
 
 
 def nominal_runs_csv_path(cfg: DetsysConfig, var: str) -> Path:
-    subdir = det_var_subdir(var)
     return (
-        Path(cfg.data_dir)
-        / "det_var"
-        / subdir
+        det_var_root(cfg)
+        / det_var_subdir(var)
         / cfg.version
         / f"{var}_nominal_runs.csv"
     )
 
 
 def nominal_all_entries_path(cfg: DetsysConfig) -> Path:
-    return Path(cfg.data_dir) / "det_var" / cfg.version / NOMINAL_ALL_ENTRIES_NAME
+    return det_var_root(cfg) / cfg.version / NOMINAL_ALL_ENTRIES_NAME
 
 
 def pot_scaling_path(cfg: DetsysConfig) -> Path:
-    return Path(cfg.data_dir) / "det_var" / cfg.version / "pot_scaling.json"
+    return det_var_root(cfg) / cfg.version / "pot_scaling.json"
 
 
 def _index_depth(index: pd.Index) -> int:

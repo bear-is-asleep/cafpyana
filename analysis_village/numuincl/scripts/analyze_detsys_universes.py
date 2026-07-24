@@ -292,9 +292,14 @@ def main() -> int:
         help="Plot covariance/correlation matrices under twod/.",
     )
     parser.add_argument("--ncpu", type=int, default=16, help="Workers for loading saved systematics (use 1 on small nodes).")
+    parser.add_argument(
+        "--out-dir",
+        default=None,
+        help="Override read/write root for universes / plots (default: data_dir).",
+    )
     args = parser.parse_args()
 
-    cfg = build_config(day=args.day, ncpu=args.ncpu)
+    cfg = build_config(day=args.day, ncpu=args.ncpu, out_dir=args.out_dir)
     Path(cfg.save_dir).mkdir(parents=True, exist_ok=True)
     Path(cfg.plot_dir).mkdir(parents=True, exist_ok=True)
     cuts = [args.cut] if args.cut else cfg.cuts

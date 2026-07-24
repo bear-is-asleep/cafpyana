@@ -92,8 +92,8 @@ def build_event_lists(
             n_common=n_common,
             pot_nominal_full=pot_nominal_full,
             pot_det_full=pot_det_full,
-            runs_csv=str(csv_path.relative_to(cfg.data_dir)),
-            nominal_runs_csv=str(nom_csv_path.relative_to(cfg.data_dir)),
+            runs_csv=str(csv_path.relative_to(cfg.out_dir)),
+            nominal_runs_csv=str(nom_csv_path.relative_to(cfg.out_dir)),
         )
         print(
             f"{var}: n_common={n_common} / nom={n_nominal} var={n_variation} "
@@ -140,7 +140,12 @@ def main() -> int:
         help="One file per sample list (overrides --small).",
     )
     parser.add_argument("--version", default=None, help="Dataset version tag (default: v9).")
-    parser.add_argument("--data-dir", default=None, help="Override pandora data root.")
+    parser.add_argument("--data-dir", default=None, help="Override pandora input root (HDF globs).")
+    parser.add_argument(
+        "--out-dir",
+        default=None,
+        help="Override write root for det CSVs / pot_scaling (default: data_dir).",
+    )
     parser.add_argument("--ncpu", type=int, default=8, help="Workers for CAF/HDF loading.")
     parser.add_argument("--var", default=None, help="Process a single variation only.")
     parser.add_argument("--dry-run", action="store_true", help="Print paths only.")
@@ -159,11 +164,13 @@ def main() -> int:
         build_mode=build_mode,
         ncpu=args.ncpu,
         data_dir=args.data_dir,
+        out_dir=args.out_dir,
         version=args.version,
     )
     file_map = build_file_map(cfg)
     print(
-        f"version={cfg.version} data_dir={cfg.data_dir} build_mode={cfg.build_mode} "
+        f"version={cfg.version} data_dir={cfg.data_dir} out_dir={cfg.out_dir} "
+        f"build_mode={cfg.build_mode} "
         f"nominal_files={len(file_map['MC_NOMINAL_FNAMES'])}"
     )
     for var, flist in zip(file_map["DET_VARS"], file_map["DET_FNAMES"]):

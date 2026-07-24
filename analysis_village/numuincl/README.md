@@ -2,18 +2,41 @@
 
 ## Introduction
 
-The purpose of this analysis is to extract 
+- Extract inclusive $\nu_\mu$ events with the Pandora reconstruction chain.
+- Shared helpers and classes live in `sbnd/` (mysbndana / sbnd_helper).
+
+## Getting started (setup)
+
+- Pull the `sbnd` submodule (mysbndana / sbnd_helper):
+
+```bash
+# from cafpyana root, after cloning the fork
+git submodule update --init analysis_village/numuincl/sbnd
+```
+
+## Making Files
+
+- Selection and dataframe jobs via `runit.py` or `runit.sh`. Runs grid or pool mode.
+- Jobs described by YAMLs under `yamls/`; maker logic in `makedf1muX.py`.
+- Example: `python runit.py -y yamls/<sample>.yaml` (optional `--dry-run`, `--only`).
+
+
+
+## Postprocessing of files
+
+- Move job outputs with `scripts/move_files.py` as needed.
+- Detector systematics are built in chunks (RAM limits). Use the chunked pipeline under `scripts/`; instructions in `scripts/README.md`.
+
+
+
+## Analysis - core notebooks
+
+- `systematics.ipynb`: evaluates reweightable systematics (including statistical uncertainties), combines them with detector systematics, and stores results with `systematic.save(...)`.
+- `unfolding.ipynb`: runs unfolding / cross section extraction and stores results with `xsec.save(...)`.
+- `interaction_plots.ipynb`: stacked histograms (loads systematics from `systematic.save(...)`), purity/efficiency tables, and resolution plots.
+
+Other notebooks are deprecated, study-specific, or incomplete.
 
 ## Data
 
-This analysis uses the SBND Gen I production.
-
-## Analysis
-
-1. Create detector systematics using `detsys.ipynb`
-2. Create reweightable systematics (including statistical uncertainties) using `systematics.ipynb`
-3. Merge the systematics using `systematics.ipynb` as well
-
-* `interaction_plots.ipynb` creates interaction-level plots broken into signal and background. It can utilize systematics from `systematics.ipynb` to create plots, and overlays data and MC.
-* `particle_fm.ipynb` creates particle-level plots and explores flash matching cuts. It also utilizes calorimetric variations for the cuts on track-level variables.
-* `unfolding.ipynb` extracts the cross section and does fake data studies. It depends on the systematics from `systematics.ipynb` and detector systematics from `detsys.ipynb`.
+Analysis uses SBND Gen I production. Analysis files, plots, and saved data can be found here - `/exp/sbnd/data/users/brindenc/analyze_sbnd/numu/v10_06_00_validation/pandora`

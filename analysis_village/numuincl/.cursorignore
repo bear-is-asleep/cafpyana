@@ -3,4 +3,3 @@ node_modules/
 .git/
 build/
 dist/
-scripts/build_det_event_lists.py
